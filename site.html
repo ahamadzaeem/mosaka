@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth bg-[#0a0a09] text-[#e3ded9]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOSAKA BATHWARE | Where Elements Become Art</title>
+
+  <!-- Google Fonts: Cormorant Garamond & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            gold: {
+              300: '#e5ca9e',
+              400: '#d4b47d',
+              500: '#c59d60',
+              600: '#a87e3f',
+            },
+            dark: {
+              900: '#11100f',
+              950: '#0a0a09',
+            }
+          },
+          letterSpacing: {
+            luxury: '0.24em',
+            'wide-luxury': '0.35em',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- GSAP & ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lenis ("lessis") Smooth Scroll -->
+  <script src="https://unpkg.com/lenis@1.1.20/dist/lenis.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0a0a09;
+      color: #e3ded9;
+      overflow-x: hidden;
+    }
+    h1, h2, h3, h4, .font-serif {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0a0a09;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2b2824;
+      border-radius: 2px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #c59d60;
+    }
+
+    html.lenis, html.lenis body {
+      height: auto;
+    }
+    .lenis.lenis-smooth {
+      scroll-behavior: auto !important;
+    }
+
+    .card-img-zoom {
+      transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .card-hover-box:hover .card-img-zoom {
+      transform: scale(1.06);
+    }
+
+    #custom-cursor-dot {
+      pointer-events: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 6px;
+      height: 6px;
+      margin-left: -3px;
+      margin-top: -3px;
+      background-color: #d4b47d;
+      border-radius: 50%;
+      z-index: 99999;
+      transition: opacity 0.2s ease;
+    }
+    #custom-cursor-ring {
+      pointer-events: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 32px;
+      height: 32px;
+      margin-left: -16px;
+      margin-top: -16px;
+      border: 1px solid rgba(212, 180, 125, 0.4);
+      border-radius: 50%;
+      z-index: 99998;
+      transition: width 0.3s ease, height 0.3s ease, margin 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    }
+    .cursor-hover #custom-cursor-ring {
+      width: 50px;
+      height: 50px;
+      margin-left: -25px;
+      margin-top: -25px;
+      border-color: rgba(212, 180, 125, 0.85);
+      background-color: rgba(212, 180, 125, 0.08);
+    }
+    .cursor-hover #custom-cursor-dot {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-[#d4b47d]/30 selection:text-white">
+
+  <!-- ReactBits Custom Trailing Cursor -->
+  <div id="custom-cursor-dot"></div>
+  <div id="custom-cursor-ring"></div>
+
+  <!-- ==================== HEADER / NAVBAR (White Outline & Bleed Tab Architecture) ==================== -->
+  <header id="navbar" class="fixed top-0 left-0 right-0 z-50 pointer-events-none transition-all duration-300">
+    <!-- Top White Outline Frame -->
+    <div id="nav-top-border" class="w-full h-2 sm:h-2.5 bg-white transition-all duration-300"></div>
+
+    <div id="nav-bar-inner" class="w-full pointer-events-auto h-14 sm:h-16 flex items-center justify-between px-6 sm:px-10 lg:px-14 relative bg-transparent transition-all duration-300">
+      <!-- Left Wings: Navigation Links floating directly over the video frame -->
+      <nav class="hidden md:flex items-center gap-7 lg:gap-9 text-xs uppercase tracking-[0.2em] font-medium z-10">
+        <a href="#hero" class="text-white hover:text-gold-300 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] relative py-1">Home</a>
+        <a href="#about" class="text-white hover:text-gold-300 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] py-1">About</a>
+        <div class="relative group">
+          <a href="#collections" class="flex items-center gap-1.5 text-white hover:text-gold-300 py-1 transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+            <span>Collections</span>
+            <svg class="w-3 h-3 text-stone-300 group-hover:text-white transition-transform group-hover:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </a>
+          <div class="absolute top-full left-0 pt-2 w-56 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-200">
+            <div class="bg-[#141312]/95 border border-white/10 rounded-md py-2 px-1 shadow-2xl backdrop-blur-md">
+              <a href="#collections" class="block px-3 py-2 text-xs text-stone-300 hover:text-gold-300 hover:bg-white/5 rounded">Wooden Basins</a>
+              <a href="#collections" class="block px-3 py-2 text-xs text-stone-300 hover:text-gold-300 hover:bg-white/5 rounded">Copper & Brass</a>
+              <a href="#collections" class="block px-3 py-2 text-xs text-stone-300 hover:text-gold-300 hover:bg-white/5 rounded">Statement Basins</a>
+              <a href="#collections" class="block px-3 py-2 text-xs text-stone-300 hover:text-gold-300 hover:bg-white/5 rounded">Tapware</a>
+            </div>
+          </div>
+        </div>
+        <a href="#featured-pieces" class="text-stone-200 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] py-1">Featured</a>
+      </nav>
+
+      <!-- Center White Tab: Bleeds seamlessly down from the top white border -->
+      <div class="absolute left-1/2 -translate-x-1/2 top-0 z-20 w-[190px] sm:w-[220px] md:w-[230px] h-[58px] sm:h-[66px] md:h-[68px]">
+        <svg viewBox="0 0 220 56" preserveAspectRatio="none" class="w-full h-full drop-shadow-[0_4px_16px_rgba(0,0,0,0.25)]">
+          <path d="M 0,0 L 20,44 Q 25,54 36,54 L 184,54 Q 195,54 200,44 L 220,0 Z" fill="#ffffff" />
+        </svg>
+        <a href="#" class="absolute inset-0 flex items-center justify-center pb-1.5 px-4 cursor-pointer group">
+          <img src="/images/mosaka_logo.png" alt="MOSAKA BATHWARE" class="h-7 sm:h-8 md:h-[32px] w-auto max-w-[85%] object-contain group-hover:opacity-75 transition-opacity">
+        </a>
+      </div>
+
+      <!-- Right Wings: Navigation Links & Actions floating directly over the video -->
+      <div class="flex items-center gap-5 sm:gap-7 lg:gap-8 z-10">
+        <nav class="hidden md:flex items-center gap-7 lg:gap-8 text-xs uppercase tracking-[0.2em] font-medium">
+          <a href="#complete-space" class="text-stone-200 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] py-1">Gallery</a>
+          <a href="#footer" class="text-stone-200 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] py-1">Contact</a>
+          <button onclick="openEnquiryModal('Direct Website Inquiry')" class="flex items-center gap-1.5 text-white hover:text-gold-300 transition-colors py-1 font-semibold group drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]">
+            <span>Book Now</span>
+            <span class="text-sm transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
+          </button>
+        </nav>
+
+        <!-- Search & Cart -->
+        <div class="flex items-center gap-3 sm:gap-4 pl-2 border-l border-white/20">
+          <button onclick="openSearchModal()" class="p-1.5 text-stone-200 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" title="Search">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+
+          <button onclick="toggleCartDrawer()" class="relative p-1.5 text-stone-200 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)]" title="Cart">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            <span id="cart-badge" class="absolute -top-1 -right-1.5 w-4 h-4 rounded-full bg-gold-400 text-stone-950 text-[10px] font-bold flex items-center justify-center">
+              0
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== HERO SECTION: Inset in White Outline with Rounded Top Corners ==================== -->
+  <section id="hero" class="relative w-full h-screen overflow-hidden bg-white pt-2 px-2 sm:pt-2.5 sm:px-2.5">
+    <div class="relative w-full h-full overflow-hidden rounded-t-2xl sm:rounded-t-[24px] bg-[#0a0a09]">
+      <canvas id="hero-canvas" class="w-full h-full block object-cover pointer-events-none"></canvas>
+
+      <!-- Minimal subtle bottom scroll hint -->
+      <div class="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-40">
+        <div class="w-[1px] h-8 bg-gradient-to-b from-white/70 to-transparent animate-pulse"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== THE COLLECTIONS ==================== -->
+  <section id="collections" class="py-20 sm:py-24 lg:py-28 bg-[#0a0a09] relative overflow-hidden">
+    <!-- Ambient luxury radial glow -->
+    <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_75%_45%_at_50%_48%,rgba(200,169,110,0.06),transparent_70%)]"></div>
+
+    <div class="w-full max-w-[1536px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+      <div class="flex items-center justify-between pb-6 mb-8 sm:mb-10">
+        <h2 class="text-xs sm:text-[13px] font-medium uppercase tracking-[0.28em] text-white/90">
+          THE COLLECTIONS
+        </h2>
+        <a
+          href="#featured-pieces"
+          class="group flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-stone-400 hover:text-gold-300 transition-colors"
+        >
+          <span>EXPLORE ALL COLLECTIONS</span>
+          <span class="group-hover:translate-x-1.5 transition-transform text-stone-400 group-hover:text-gold-300">→</span>
+        </a>
+      </div>
+
+      <!-- Relative Container for Cards + Root Line -->
+      <div class="relative">
+        <!-- Desktop/Tablet Glowing Golden Root Line (Inspired by HOP) -->
+        <div class="hidden md:block absolute top-[58%] left-0 right-0 -translate-y-1/2 h-36 lg:h-44 pointer-events-none z-0 opacity-90 transition-opacity duration-1000 overflow-visible">
+          <svg width="100%" height="100%" viewBox="0 0 1200 80" preserveAspectRatio="none" class="drop-shadow-[0_0_20px_rgba(200,169,110,0.35)]">
+            <defs>
+              <linearGradient id="root-line-glow-h-site" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#C8A96E" stop-opacity="0" />
+                <stop offset="8%" stop-color="#C8A96E" stop-opacity="0.8" />
+                <stop offset="25%" stop-color="#E5C583" stop-opacity="0.95" />
+                <stop offset="50%" stop-color="#FFF8E7" stop-opacity="1" />
+                <stop offset="75%" stop-color="#E5C583" stop-opacity="0.95" />
+                <stop offset="92%" stop-color="#C8A96E" stop-opacity="0.8" />
+                <stop offset="100%" stop-color="#C8A96E" stop-opacity="0" />
+              </linearGradient>
+              <filter id="root-glow-heavy-site" x="-20%" y="-40%" width="140%" height="180%">
+                <feGaussianBlur stdDeviation="5.5" result="blur" />
+              </filter>
+              <filter id="root-glow-medium-site" x="-20%" y="-40%" width="140%" height="180%">
+                <feGaussianBlur stdDeviation="2.5" result="blur" />
+              </filter>
+            </defs>
+            <!-- Layer 1: Diffuse Outer Glow -->
+            <path d="M 0,40 C 200,46 400,34 600,40 C 800,46 1000,34 1200,40" stroke="url(#root-line-glow-h-site)" stroke-width="7" fill="none" opacity="0.4" filter="url(#root-glow-heavy-site)" />
+            <!-- Layer 2: Medium Radiance -->
+            <path d="M 0,40 C 200,46 400,34 600,40 C 800,46 1000,34 1200,40" stroke="url(#root-line-glow-h-site)" stroke-width="2.8" fill="none" opacity="0.8" filter="url(#root-glow-medium-site)" />
+            <!-- Layer 3: Sharp Core Spline -->
+            <path d="M 0,40 C 200,46 400,34 600,40 C 800,46 1000,34 1200,40" stroke="url(#root-line-glow-h-site)" stroke-width="1.3" fill="none" opacity="0.95" class="root-line-main-path" />
+            <!-- Delicate Botanical Tendrils in Gaps -->
+            <g stroke="url(#root-line-glow-h-site)" stroke-width="1.2" fill="none" filter="url(#root-glow-medium-site)">
+              <path d="M 300,40 Q 320,62 335,65" />
+              <path d="M 320,62 Q 338,54 350,56" stroke-width="0.75" />
+              <path d="M 600,40 Q 620,18 635,15" />
+              <path d="M 620,18 Q 638,26 650,24" stroke-width="0.75" />
+              <path d="M 900,40 Q 920,62 935,65" />
+              <path d="M 920,62 Q 938,54 950,56" stroke-width="0.75" />
+            </g>
+            <!-- Luminous Nodes -->
+            <g fill="#E5C583" filter="url(#root-glow-medium-site)">
+              <circle cx="335" cy="65" r="2.5" class="root-line-node" />
+              <circle cx="350" cy="56" r="1.8" class="root-line-node" />
+              <circle cx="635" cy="15" r="2.5" class="root-line-node" />
+              <circle cx="650" cy="24" r="1.8" class="root-line-node" />
+              <circle cx="935" cy="65" r="2.5" class="root-line-node" />
+              <circle cx="950" cy="56" r="1.8" class="root-line-node" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- Mobile Vertical Glowing Root Line -->
+        <div class="md:hidden absolute left-1/2 top-4 bottom-4 -translate-x-1/2 w-48 pointer-events-none z-0 opacity-75">
+          <svg width="100%" height="100%" viewBox="0 0 100 1000" preserveAspectRatio="none" class="drop-shadow-[0_0_18px_rgba(200,169,110,0.35)]">
+            <defs>
+              <linearGradient id="root-line-glow-v-site" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#C8A96E" stop-opacity="0" />
+                <stop offset="5%" stop-color="#C8A96E" stop-opacity="0.8" />
+                <stop offset="50%" stop-color="#ffffff" stop-opacity="0.9" />
+                <stop offset="95%" stop-color="#C8A96E" stop-opacity="0.8" />
+                <stop offset="100%" stop-color="#C8A96E" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <path d="M 50,0 Q 70,250 50,500 T 50,1000" stroke="url(#root-line-glow-v-site)" stroke-width="2.5" fill="none" />
+            <g stroke="url(#root-line-glow-v-site)" stroke-width="1" fill="none" opacity="0.8">
+              <path d="M 52,125 L 75,145 M 48,375 L 25,355 M 52,625 L 80,645 M 48,875 L 20,855" />
+            </g>
+            <g fill="#C8A96E">
+              <circle cx="75" cy="145" r="2.5" class="root-line-node" />
+              <circle cx="25" cy="355" r="2.5" class="root-line-node" />
+              <circle cx="80" cy="645" r="2.5" class="root-line-node" />
+              <circle cx="20" cy="855" r="2.5" class="root-line-node" />
+            </g>
+          </svg>
+        </div>
+
+        <!-- 4 Columns Grid - Pure Edge-to-Edge Column Images + Clean Typography -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8 relative z-10">
+          <div onclick="showToast('Selected Collection: Wooden Basins')" class="collection-col-item group cursor-pointer flex flex-col p-4 -m-4 rounded-xl border border-transparent hover:border-gold-400/25 hover:bg-[#12110f]/75 hover:backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_35px_rgba(200,169,110,0.12)]">
+            <div class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-5 sm:mb-6 shadow-md">
+              <img src="./images/col_wood_exact_match.jpg" onerror="this.src='./images/col_wood_hires.jpg'" alt="Wooden Basins" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+            </div>
+            <div class="flex flex-col">
+              <h3 class="font-serif text-2xl lg:text-[26px] text-white group-hover:text-gold-300 transition-colors font-normal tracking-wide leading-tight mb-2">
+                Wooden Basins
+              </h3>
+              <p class="text-xs sm:text-[13px] text-stone-400 font-light leading-relaxed mb-3.5">
+                Nature's Artistry, Beautifully Formed.
+              </p>
+              <div>
+                <span class="inline-block text-stone-400 group-hover:text-gold-400 group-hover:translate-x-1.5 transition-all duration-300 text-sm">→</span>
+              </div>
+            </div>
+          </div>
+
+          <div onclick="showToast('Selected Collection: Copper & Brass')" class="collection-col-item group cursor-pointer flex flex-col p-4 -m-4 rounded-xl border border-transparent hover:border-gold-400/25 hover:bg-[#12110f]/75 hover:backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_35px_rgba(200,169,110,0.12)]">
+            <div class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-5 sm:mb-6 shadow-md">
+              <img src="./images/col_copper_exact_match.jpg" onerror="this.src='./images/col_copper_box.jpg'" alt="Copper & Brass" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+            </div>
+            <div class="flex flex-col">
+              <h3 class="font-serif text-2xl lg:text-[26px] text-white group-hover:text-gold-300 transition-colors font-normal tracking-wide leading-tight mb-2">
+                Copper & Brass
+              </h3>
+              <p class="text-xs sm:text-[13px] text-stone-400 font-light leading-relaxed mb-3.5">
+                The Warmth of Distinctive Materials.
+              </p>
+              <div>
+                <span class="inline-block text-stone-400 group-hover:text-gold-400 group-hover:translate-x-1.5 transition-all duration-300 text-sm">→</span>
+              </div>
+            </div>
+          </div>
+
+          <div onclick="showToast('Selected Collection: Statement Basins')" class="collection-col-item group cursor-pointer flex flex-col p-4 -m-4 rounded-xl border border-transparent hover:border-gold-400/25 hover:bg-[#12110f]/75 hover:backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_35px_rgba(200,169,110,0.12)]">
+            <div class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-5 sm:mb-6 shadow-md">
+              <img src="./images/col_statement_exact_match.jpg" onerror="this.src='./images/col_statement_box.jpg'" alt="Statement Basins" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+            </div>
+            <div class="flex flex-col">
+              <h3 class="font-serif text-2xl lg:text-[26px] text-white group-hover:text-gold-300 transition-colors font-normal tracking-wide leading-tight mb-2">
+                Statement Basins
+              </h3>
+              <p class="text-xs sm:text-[13px] text-stone-400 font-light leading-relaxed mb-3.5">
+                Sculptural Forms, Individual Character.
+              </p>
+              <div>
+                <span class="inline-block text-stone-400 group-hover:text-gold-400 group-hover:translate-x-1.5 transition-all duration-300 text-sm">→</span>
+              </div>
+            </div>
+          </div>
+
+          <div onclick="showToast('Selected Collection: Tapware')" class="collection-col-item group cursor-pointer flex flex-col p-4 -m-4 rounded-xl border border-transparent hover:border-gold-400/25 hover:bg-[#12110f]/75 hover:backdrop-blur-sm transition-all duration-500 hover:shadow-[0_0_35px_rgba(200,169,110,0.12)]">
+            <div class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-5 sm:mb-6 shadow-md">
+              <img src="./images/col_tapware_exact_match.jpg" onerror="this.src='./images/col_tapware_exact.jpg'" alt="Tapware" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+            </div>
+            <div class="flex flex-col">
+              <h3 class="font-serif text-2xl lg:text-[26px] text-white group-hover:text-gold-300 transition-colors font-normal tracking-wide leading-tight mb-2">
+                Tapware
+              </h3>
+              <p class="text-xs sm:text-[13px] text-stone-400 font-light leading-relaxed mb-3.5">
+                The Art of Water.
+              </p>
+              <div>
+                <span class="inline-block text-stone-400 group-hover:text-gold-400 group-hover:translate-x-1.5 transition-all duration-300 text-sm">→</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== ABOUT MOSAKA ==================== -->
+  <section id="about" class="py-14 sm:py-16 lg:py-20 bg-[#0a0a09] relative">
+    <div class="w-full max-w-[1536px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <!-- Left Statement (~42%) -->
+        <div class="lg:col-span-5">
+          <span class="text-xs uppercase tracking-[0.28em] text-white/90 font-medium block mb-4">
+            ABOUT MOSAKA
+          </span>
+
+          <h2 class="font-serif text-3xl sm:text-5xl lg:text-[52px] text-white font-normal leading-[1.12] mb-6">
+            Nature creates. <br />
+            MOSAKA curates.
+          </h2>
+
+          <p class="text-stone-300 text-xs sm:text-sm font-light leading-relaxed mb-7 max-w-md">
+            At Mosaka Bathware, we believe a basin can be more than a functional element. It can be the defining feature of a space.
+          </p>
+
+          <button
+            onclick="openEnquiryModal('MOSAKA Story & Heritage')"
+            class="group inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-stone-200 hover:text-gold-300 transition-colors"
+          >
+            <span>OUR STORY</span>
+            <span class="text-stone-300 group-hover:text-gold-300 group-hover:translate-x-1.5 transition-transform duration-300">→</span>
+          </button>
+        </div>
+
+        <!-- Right: 3 Large Material Swatches (~58%, spanning to right margin) -->
+        <div class="lg:col-span-7 grid grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+          <div onclick="showToast('Material: Natural Burl Wood Grain')" class="aspect-square bg-[#0d0c0b] rounded-[2px] overflow-hidden cursor-pointer group relative shadow-xl">
+            <img src="./images/mat_1_large.jpg" alt="Natural Burl Wood Grain" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" />
+            <div class="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors duration-300"></div>
+          </div>
+          <div onclick="showToast('Material: Hand-Hammered Pure Copper')" class="aspect-square bg-[#0d0c0b] rounded-[2px] overflow-hidden cursor-pointer group relative shadow-xl">
+            <img src="./images/mat_2_large.jpg" alt="Hand-Hammered Copper Texture" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" />
+            <div class="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors duration-300"></div>
+          </div>
+          <div onclick="showToast('Material: Circular Brushed Brass')" class="aspect-square bg-[#0d0c0b] rounded-[2px] overflow-hidden cursor-pointer group relative shadow-xl">
+            <img src="./images/mat_3_large.jpg" alt="Circular Brushed Brass" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" />
+            <div class="absolute inset-0 bg-black/15 group-hover:bg-transparent transition-colors duration-300"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FEATURED PIECES ==================== -->
+  <section id="featured-pieces" class="py-14 sm:py-16 lg:py-20 bg-[#0a0a09] relative">
+    <div class="w-full max-w-[1536px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+      <div class="flex items-center justify-between pb-6 mb-8 sm:mb-10">
+        <h2 class="text-xs sm:text-[13px] font-medium uppercase tracking-[0.28em] text-white/90">
+          FEATURED PIECES
+        </h2>
+        <button
+          onclick="openSearchModal()"
+          class="group flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-stone-400 hover:text-gold-300 transition-colors"
+        >
+          <span>VIEW ALL PRODUCTS</span>
+          <span class="group-hover:translate-x-1.5 transition-transform text-stone-400 group-hover:text-gold-300">→</span>
+        </button>
+      </div>
+
+      <!-- 4 Products Row - Clean & Borderless matching reference -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
+        <div class="product-col-item group cursor-pointer flex flex-col justify-between">
+          <div onclick="openProductQuickView('amezon')" class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5">
+            <img src="./images/prod_amezon_clean.jpg" onerror="this.src='./images/prod_amezon_exact.jpg'" alt="Amezon Basin" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+          </div>
+          <div class="flex items-end justify-between pt-1">
+            <div>
+              <h4 onclick="openProductQuickView('amezon')" class="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                Amezon Basin
+              </h4>
+              <p class="text-xs text-stone-400 font-light mt-1">AED 5,950</p>
+            </div>
+            <button onclick="addToBag('Amezon Basin', 5950, './images/prod_amezon_clean.jpg')" class="p-2 text-stone-400 hover:text-white transition-colors" title="Add to bag">
+              <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="product-col-item group cursor-pointer flex flex-col justify-between">
+          <div onclick="openProductQuickView('nile')" class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5">
+            <img src="./images/prod_nile_clean.jpg" onerror="this.src='./images/prod_nile_master.jpg'" alt="Nile Basin" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+          </div>
+          <div class="flex items-end justify-between pt-1">
+            <div>
+              <h4 onclick="openProductQuickView('nile')" class="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                Nile Basin
+              </h4>
+              <p class="text-xs text-stone-400 font-light mt-1">AED 6,450</p>
+            </div>
+            <button onclick="addToBag('Nile Basin', 6450, './images/prod_nile_clean.jpg')" class="p-2 text-stone-400 hover:text-white transition-colors" title="Add to bag">
+              <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="product-col-item group cursor-pointer flex flex-col justify-between">
+          <div onclick="openProductQuickView('emerald')" class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5">
+            <img src="./images/prod_emerald_clean.jpg" onerror="this.src='./images/prod_emerald_master.jpg'" alt="Emerald Basin" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+          </div>
+          <div class="flex items-end justify-between pt-1">
+            <div>
+              <h4 onclick="openProductQuickView('emerald')" class="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                Emerald Basin
+              </h4>
+              <p class="text-xs text-stone-400 font-light mt-1">AED 7,250</p>
+            </div>
+            <button onclick="addToBag('Emerald Basin', 7250, './images/prod_emerald_clean.jpg')" class="p-2 text-stone-400 hover:text-white transition-colors" title="Add to bag">
+              <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="product-col-item group cursor-pointer flex flex-col justify-between">
+          <div onclick="openProductQuickView('tectona')" class="relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5">
+            <img src="./images/prod_tectona_clean.jpg" onerror="this.src='./images/prod_tectona_master.jpg'" alt="Tectona Basin" class="w-full h-full object-cover object-center group-hover:scale-104 transition-transform duration-700 ease-out" />
+          </div>
+          <div class="flex items-end justify-between pt-1">
+            <div>
+              <h4 onclick="openProductQuickView('tectona')" class="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                Tectona Basin
+              </h4>
+              <p class="text-xs text-stone-400 font-light mt-1">AED 5,850</p>
+            </div>
+            <button onclick="addToBag('Tectona Basin', 5850, './images/prod_tectona_clean.jpg')" class="p-2 text-stone-400 hover:text-white transition-colors" title="Add to bag">
+              <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+            </div>
+            <button onclick="addToBag('Tectona Basin', 5850, './images/prod_tectona_exact.jpg')" class="p-2.5 border border-white/10 hover:border-gold-400 hover:bg-gold-400/10 rounded-full text-stone-300 hover:text-gold-300 transition-colors" title="Add to bag">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== COMPLETE THE SPACE ==================== -->
+  <section id="complete-space" class="relative w-full bg-[#0a0a09] overflow-hidden py-6 sm:py-8 border-t border-white/5">
+    <div class="relative w-full max-w-[1600px] mx-auto min-h-[460px] sm:min-h-[500px] lg:min-h-[540px] flex items-center overflow-hidden bg-[#0a0a09]">
+      <!-- Full Left & Center Cinematic Image with Smooth Gradient Dissolve into Black -->
+      <div class="absolute inset-0 w-full h-full overflow-hidden">
+        <img
+          src="./images/space_vanity_master.jpg"
+          onerror="this.src='./images/space_vanity_hires.jpg'"
+          alt="Complete The Space - Basins, Taps, Accessories"
+          class="w-full h-full object-cover object-left md:object-center transform origin-left group-hover:scale-103 transition-transform duration-1000"
+        />
+        <!-- Smooth Linear Gradient Dissolve into deep black on the right (matching reference) -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-[#0a0a09]/50 via-60% to-[#0a0a09] pointer-events-none"></div>
+        <div class="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-[#0a0a09] to-transparent pointer-events-none"></div>
+        <div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0a0a09] to-transparent pointer-events-none"></div>
+      </div>
+
+      <!-- Content Container: Editorial Narrative Positioned on the Right over the dissolved dark background -->
+      <div class="relative z-10 w-full px-6 sm:px-12 lg:px-16 xl:px-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="hidden lg:block lg:col-span-7"></div>
+        <div class="lg:col-span-5 flex flex-col justify-center py-10 lg:py-16">
+          <span class="text-[11px] sm:text-xs uppercase tracking-[0.28em] text-white/90 font-medium block mb-3 sm:mb-4">
+            COMPLETE THE SPACE
+          </span>
+          <h2 class="font-serif text-3xl sm:text-4xl lg:text-[46px] text-white font-normal leading-[1.12] mb-4 sm:mb-5">
+            Basins. Taps. <br />
+            Accessories.
+          </h2>
+          <p class="text-stone-300 text-xs sm:text-[13px] font-light leading-relaxed mb-7 sm:mb-8 max-w-sm">
+            A cohesive collection for thoughtfully designed bathrooms.
+          </p>
+          <div>
+            <a
+              href="#enquiry-banner"
+              class="inline-flex items-center gap-3 px-6 sm:px-7 py-3 sm:py-3.5 bg-transparent border border-white/30 hover:border-gold-300 text-stone-200 hover:text-white text-[10.5px] uppercase tracking-[0.24em] transition-all duration-300 group cursor-pointer shadow-lg hover:shadow-gold-400/10"
+            >
+              <span>EXPLORE ACCESSORIES</span>
+              <span class="text-stone-400 group-hover:text-gold-300 group-hover:translate-x-1 transition-transform">→</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FIND THE RIGHT PIECE BANNER ==================== -->
+  <section id="enquiry-banner" class="relative py-16 sm:py-20 bg-[#d8d0c5] text-[#1c1b19] overflow-hidden">
+    <div class="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply pointer-events-none" style="background-image: url('./images/travertine_clean.jpg');"></div>
+
+    <div class="relative w-full max-w-[1536px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-5">
+          <h2 class="font-serif text-3xl sm:text-5xl text-[#1a1918] font-normal leading-[1.15]">
+            Find the Right Piece <br />
+            for Your Project.
+          </h2>
+        </div>
+
+        <div class="hidden lg:block lg:col-span-1 h-20 w-[1px] bg-[#1a1918]/20 justify-self-center"></div>
+
+        <div class="lg:col-span-6 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+          <p class="text-xs sm:text-sm text-[#2c2a27] font-light leading-relaxed max-w-md">
+            Whether you are designing your own bathroom or sourcing for a client, we would love to help you find the right piece.
+          </p>
+
+          <button
+            onclick="openEnquiryModal('Bespoke Architectural Project Inquiry')"
+            class="flex-shrink-0 px-6 py-3.5 bg-[#0e0e0d] hover:bg-[#23211f] text-[#f2eee9] text-[10px] uppercase tracking-luxury flex items-center gap-3 transition-colors duration-300 shadow-xl group"
+          >
+            <span>ENQUIRE ABOUT THE COLLECTION</span>
+            <span class="text-gold-400 group-hover:translate-x-1 transition-transform">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="bg-[#080807] text-[#9c9790] pt-16 sm:pt-20 pb-12 border-t border-white/5">
+    <div class="max-w-7xl mx-auto px-6 sm:px-12">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-12 pb-14 border-b border-white/10">
+        <div class="lg:col-span-4 flex flex-col justify-start">
+          <a href="#" class="cursor-pointer group inline-block mb-4">
+            <img src="/images/mosaka_logo_white.png" alt="MOSAKA BATHWARE" class="h-9 sm:h-10 w-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity">
+          </a>
+          <p class="text-xs text-stone-400 font-light mt-2 leading-relaxed max-w-xs">
+            Sculptural bathware for contemporary living.
+          </p>
+        </div>
+
+        <div class="lg:col-span-3">
+          <h4 class="text-[10px] font-semibold uppercase tracking-[0.25em] text-white mb-5">
+            COLLECTIONS
+          </h4>
+          <ul class="space-y-2.5 text-xs font-light text-stone-400">
+            <li><a href="#collections" class="hover:text-white transition-colors">Wooden Basins</a></li>
+            <li><a href="#collections" class="hover:text-white transition-colors">Copper & Brass</a></li>
+            <li><a href="#collections" class="hover:text-white transition-colors">Statement Basins</a></li>
+            <li><a href="#collections" class="hover:text-white transition-colors">Tapware</a></li>
+            <li><a href="#collections" class="hover:text-white transition-colors">Accessories</a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-2">
+          <h4 class="text-[10px] font-semibold uppercase tracking-[0.25em] text-white mb-5">
+            COMPANY
+          </h4>
+          <ul class="space-y-2.5 text-xs font-light text-stone-400">
+            <li><a href="#about" class="hover:text-white transition-colors">About Mosaka</a></li>
+            <li><a href="#enquiry-banner" class="hover:text-white transition-colors">Contact</a></li>
+            <li><a href="#enquiry-banner" class="hover:text-white transition-colors">Projects & Trade</a></li>
+            <li><a href="#about" class="hover:text-white transition-colors">Care & Maintenance</a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-3">
+          <h4 class="text-[10px] font-semibold uppercase tracking-[0.25em] text-white mb-5">
+            GET IN TOUCH
+          </h4>
+          <ul class="space-y-2.5 text-xs font-light text-stone-400 mb-6">
+            <li class="flex items-start gap-2.5">
+              <svg class="w-3.5 h-3.5 text-stone-400 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              <span>Meydan Grandstand, Dubai, UAE</span>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="w-3.5 h-3.5 text-stone-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              <a href="tel:+971504383675" class="hover:text-white transition-colors">+971 50 438 3675</a>
+            </li>
+            <li class="flex items-center gap-2.5">
+              <svg class="w-3.5 h-3.5 text-stone-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <a href="mailto:info@mosakabathware.com" class="hover:text-white transition-colors">info@mosakabathware.com</a>
+            </li>
+          </ul>
+
+          <div class="flex items-center gap-3">
+            <a href="#instagram" aria-label="Instagram" class="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center hover:border-gold-400 hover:text-white transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </a>
+            <a href="#youtube" aria-label="YouTube" class="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center hover:border-gold-400 hover:text-white transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+              </svg>
+            </a>
+            <a href="#pinterest" aria-label="Pinterest" class="w-7 h-7 rounded-full border border-white/10 flex items-center justify-center hover:border-gold-400 hover:text-white transition-colors">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <circle cx="12" cy="12" r="9"></circle>
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-stone-500 font-light gap-4">
+        <p>© 2026 Mosaka Bathware. All Rights Reserved.</p>
+        <div class="flex items-center gap-4">
+          <a href="#privacy" class="hover:text-stone-300 transition-colors">Privacy Policy</a>
+          <span>|</span>
+          <a href="#terms" class="hover:text-stone-300 transition-colors">Terms of Service</a>
+          <span>|</span>
+          <a href="#shipping" class="hover:text-stone-300 transition-colors">Shipping & Returns</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== CART DRAWER ==================== -->
+  <div id="cart-drawer" class="fixed inset-0 z-[100] hidden">
+    <div onclick="toggleCartDrawer()" class="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"></div>
+    <div class="fixed right-0 top-0 bottom-0 w-full max-w-md bg-[#131211] border-l border-white/10 p-6 flex flex-col z-10 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-white/10">
+        <h3 class="font-serif text-2xl text-white">Your Selection</h3>
+        <button onclick="toggleCartDrawer()" class="text-stone-400 hover:text-white p-1">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <div id="cart-items" class="flex-1 overflow-y-auto py-4 divide-y divide-white/5">
+        <p id="empty-cart-msg" class="text-center text-stone-500 text-xs py-12">Your shopping bag is empty.</p>
+      </div>
+
+      <div class="pt-4 border-t border-white/10 space-y-3">
+        <div class="flex justify-between text-xs text-stone-400">
+          <span>White-Glove Delivery (Dubai & GCC)</span>
+          <span class="text-emerald-400 uppercase tracking-wider font-medium">Complimentary</span>
+        </div>
+        <div class="flex justify-between items-baseline">
+          <span class="font-serif text-lg text-white">Subtotal</span>
+          <span id="cart-total" class="font-serif text-2xl text-gold-300">AED 0</span>
+        </div>
+        <button onclick="checkout()" class="w-full py-3.5 bg-gold-400 hover:bg-gold-300 text-stone-950 text-xs uppercase tracking-luxury font-medium transition-colors">
+          Proceed to Bespoke Checkout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Modal -->
+  <div id="search-modal" class="fixed inset-0 z-[110] hidden items-start justify-center pt-24 px-4">
+    <div onclick="closeSearchModal()" class="fixed inset-0 bg-black/85 backdrop-blur-md"></div>
+    <div class="relative w-full max-w-xl bg-[#141312] border border-white/10 rounded-lg p-6 z-10 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+        <input id="search-input" oninput="filterProducts()" type="text" placeholder="Search basins, copper, wood, tapware..." class="w-full bg-transparent text-white placeholder-stone-500 outline-none text-base font-light" />
+        <button onclick="closeSearchModal()" class="text-stone-400 hover:text-white ml-2">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div id="search-results" class="mt-4 max-h-64 overflow-y-auto space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Enquiry Modal -->
+  <div id="enquiry-modal" class="fixed inset-0 z-[120] hidden items-center justify-center p-4">
+    <div onclick="closeEnquiryModal()" class="fixed inset-0 bg-black/80 backdrop-blur-md"></div>
+    <div class="relative w-full max-w-lg bg-[#141312] border border-white/10 rounded-lg p-8 z-10 shadow-2xl">
+      <button onclick="closeEnquiryModal()" class="absolute top-4 right-4 text-stone-400 hover:text-white">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <span class="text-[10px] uppercase tracking-luxury text-gold-400">Architectural Advisory</span>
+      <h3 id="enquiry-title" class="font-serif text-2xl text-white mt-1 mb-2">Enquire About The Collection</h3>
+      <p class="text-xs text-stone-400 mb-6">Our Dubai showroom specialists will assist you with custom dimensions and material selections.</p>
+
+      <form onsubmit="submitEnquiry(event)" class="space-y-4">
+        <div>
+          <label class="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Your Name *</label>
+          <input required type="text" placeholder="e.g. Maya Al Mansoori" class="w-full px-3 py-2 bg-stone-900 border border-white/10 rounded text-sm text-white focus:border-gold-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Email *</label>
+          <input required type="email" placeholder="maya@architects.ae" class="w-full px-3 py-2 bg-stone-900 border border-white/10 rounded text-sm text-white focus:border-gold-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Phone / WhatsApp</label>
+          <input type="tel" placeholder="+971 50 000 0000" class="w-full px-3 py-2 bg-stone-900 border border-white/10 rounded text-sm text-white focus:border-gold-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-[10px] uppercase tracking-wider text-stone-400 mb-1">Project Details</label>
+          <textarea rows="3" placeholder="Tell us about your project or selected piece..." class="w-full px-3 py-2 bg-stone-900 border border-white/10 rounded text-sm text-white focus:border-gold-400 outline-none resize-none"></textarea>
+        </div>
+        <button type="submit" class="w-full py-3 bg-gold-400 hover:bg-gold-300 text-stone-950 text-xs uppercase tracking-luxury font-medium transition-colors">
+          Send Enquiry
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 right-6 z-[150] bg-[#141312] border border-gold-400/40 text-white px-4 py-3 rounded shadow-2xl flex items-center gap-3 opacity-0 pointer-events-none transition-opacity duration-300 text-xs">
+    <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+    <span id="toast-text">Item added</span>
+  </div>
+
+  <script>
+    // Initialize Lenis Smooth Scroll
+    let lenis;
+    if (typeof Lenis !== 'undefined') {
+      lenis = new Lenis({
+        duration: 1.4,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        touchMultiplier: 1.6,
+      });
+
+      function raf(time) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+      }
+      requestAnimationFrame(raf);
+    }
+
+    // GSAP ScrollTrigger Section Reveals
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Collections Reveal
+      gsap.fromTo('.collection-col-item', 
+        { opacity: 0, y: 50 },
+        {
+          opacity: 1, y: 0, stagger: 0.12, duration: 1, ease: 'power3.out',
+          scrollTrigger: { trigger: '#collections', start: 'top 80%' }
+        }
+      );
+
+      // About Section Reveal
+      gsap.fromTo('#about .lg\\:col-span-5', 
+        { opacity: 0, x: -30 },
+        {
+          opacity: 1, x: 0, duration: 1, ease: 'power3.out',
+          scrollTrigger: { trigger: '#about', start: 'top 80%' }
+        }
+      );
+      gsap.fromTo('#about .aspect-square', 
+        { opacity: 0, y: 60, scale: 0.94 },
+        {
+          opacity: 1, y: 0, scale: 1, stagger: 0.15, duration: 1.1, ease: 'power3.out',
+          scrollTrigger: { trigger: '#about', start: 'top 75%' }
+        }
+      );
+
+      // Featured Pieces Reveal
+      gsap.fromTo('.product-col-item', 
+        { opacity: 0, y: 60, scale: 0.95 },
+        {
+          opacity: 1, y: 0, scale: 1, stagger: 0.12, duration: 1.1, ease: 'power3.out',
+          scrollTrigger: { trigger: '#featured-pieces', start: 'top 80%' }
+        }
+      );
+
+      // Complete Space Parallax & Hotspots
+      gsap.fromTo('#complete-space img', 
+        { scale: 1.07 },
+        {
+          scale: 1, ease: 'none',
+          scrollTrigger: { trigger: '#complete-space', start: 'top bottom', end: 'bottom top', scrub: 1.2 }
+        }
+      );
+    }
+
+    // Canvas Image Sequence Scroll Scrub (240 Frames, 60/120fps hardware-accelerated)
+    const canvas = document.getElementById('hero-canvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const TOTAL_FRAMES = 240;
+      let currentFrame = 0;
+      let isMobile = window.innerWidth < 768;
+
+      const desktopImages = new Array(TOTAL_FRAMES);
+      const mobileImages = new Array(TOTAL_FRAMES);
+
+      const getActiveImages = () => (isMobile ? mobileImages : desktopImages);
+
+      const getFrameUrl = (index, mobile) => {
+        const num = String(index + 1).padStart(3, '0');
+        const folder = mobile ? 'frames_mobile' : 'frames';
+        return `./${folder}/frame_${num}.jpg`;
+      };
+
+      const drawCover = (img) => {
+        if (!img || !img.complete || img.naturalWidth === 0) return;
+        const cw = canvas.width;
+        const ch = canvas.height;
+        const iw = img.naturalWidth;
+        const ih = img.naturalHeight;
+        const scale = Math.max(cw / iw, ch / ih);
+        const nw = iw * scale;
+        const nh = ih * scale;
+        const nx = (cw - nw) / 2;
+        const ny = (ch - nh) / 2;
+        ctx.drawImage(img, nx, ny, nw, nh);
+      };
+
+      const renderFrame = (index) => {
+        currentFrame = Math.min(TOTAL_FRAMES - 1, Math.max(0, index));
+        const activeImgs = getActiveImages();
+        let img = activeImgs[currentFrame];
+        if (!img || !img.complete) {
+          for (let offset = 1; offset < TOTAL_FRAMES; offset++) {
+            const prev = currentFrame - offset;
+            const next = currentFrame + offset;
+            if (prev >= 0 && activeImgs[prev] && activeImgs[prev].complete) {
+              img = activeImgs[prev];
+              break;
+            }
+            if (next < TOTAL_FRAMES && activeImgs[next] && activeImgs[next].complete) {
+              img = activeImgs[next];
+              break;
+            }
+          }
+        }
+        if (img && img.complete) {
+          drawCover(img);
+        }
+      };
+
+      const preloadedModes = { desktop: false, mobile: false };
+      const preloadFrames = (mobile) => {
+        const modeKey = mobile ? 'mobile' : 'desktop';
+        if (preloadedModes[modeKey]) return;
+        preloadedModes[modeKey] = true;
+        const targetImgs = mobile ? mobileImages : desktopImages;
+
+        if (!targetImgs[0]) {
+          const first = new Image();
+          first.src = getFrameUrl(0, mobile);
+          targetImgs[0] = first;
+          first.onload = () => {
+            if (currentFrame === 0 && isMobile === mobile) drawCover(first);
+          };
+        }
+
+        for (let i = 1; i < TOTAL_FRAMES; i++) {
+          if (!targetImgs[i]) {
+            const img = new Image();
+            img.src = getFrameUrl(i, mobile);
+            targetImgs[i] = img;
+            img.onload = () => {
+              if (currentFrame === i && isMobile === mobile) drawCover(img);
+            };
+          }
+        }
+      };
+
+      const resizeCanvas = () => {
+        const nowMobile = window.innerWidth < 768;
+        if (nowMobile !== isMobile) {
+          isMobile = nowMobile;
+          preloadFrames(isMobile);
+        }
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(window.innerWidth * dpr);
+        canvas.height = Math.floor(window.innerHeight * dpr);
+        renderFrame(currentFrame);
+      };
+
+      resizeCanvas();
+      preloadFrames(isMobile);
+      window.addEventListener('resize', resizeCanvas, { passive: true });
+
+      window.addEventListener('scroll', () => {
+        const scrollY = window.scrollY;
+        const maxScroll = window.innerHeight * 2.0;
+        const prog = Math.min(1, Math.max(0, scrollY / maxScroll));
+        const frameIdx = Math.min(TOTAL_FRAMES - 1, Math.floor(prog * TOTAL_FRAMES));
+        renderFrame(frameIdx);
+
+        // Navbar scroll transition: ONLY activate dark navbar AFTER the user has scrolled past the hero section!
+        const navInner = document.getElementById('nav-bar-inner');
+        const navBorder = document.getElementById('nav-top-border');
+        const collectionsEl = document.getElementById('collections');
+        const isPastHero = collectionsEl ? (collectionsEl.getBoundingClientRect().top <= 80) : (scrollY > window.innerHeight * 2.2);
+
+        if (isPastHero) {
+          navInner.classList.remove('bg-transparent');
+          navInner.classList.add('bg-[#0a0a09]/95', 'backdrop-blur-xl', 'border-b', 'border-white/10', 'shadow-2xl');
+          if (navBorder) navBorder.classList.add('opacity-0', 'h-0');
+        } else {
+          navInner.classList.add('bg-transparent');
+          navInner.classList.remove('bg-[#0a0a09]/95', 'backdrop-blur-xl', 'border-b', 'border-white/10', 'shadow-2xl');
+          if (navBorder) navBorder.classList.remove('opacity-0', 'h-0');
+        }
+      }, { passive: true });
+    }
+
+    const cursorDot = document.getElementById('custom-cursor-dot');
+    const cursorRing = document.getElementById('custom-cursor-ring');
+    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    let ringX = mouseX, ringY = mouseY;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursorDot.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+
+      const hoverable = e.target.closest('a, button, input, .cursor-pointer, .card-hover-box');
+      if (hoverable) {
+        document.body.classList.add('cursor-hover');
+      } else {
+        document.body.classList.remove('cursor-hover');
+      }
+    });
+
+    function updateCursorRing() {
+      ringX += (mouseX - ringX) * 0.18;
+      ringY += (mouseY - ringY) * 0.18;
+      cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      requestAnimationFrame(updateCursorRing);
+    }
+    updateCursorRing();
+
+    let cart = [];
+
+    function addToBag(name, price, img) {
+      const existing = cart.find(i => i.name === name);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ name, price, img, qty: 1 });
+      }
+      renderCart();
+      showToast(`Added ${name} to bag`);
+    }
+
+    function renderCart() {
+      const cartItemsContainer = document.getElementById('cart-items');
+      const cartBadge = document.getElementById('cart-badge');
+      const cartTotal = document.getElementById('cart-total');
+
+      const count = cart.reduce((acc, i) => acc + i.qty, 0);
+      cartBadge.innerText = count;
+
+      if (cart.length === 0) {
+        cartItemsContainer.innerHTML = '<p class="text-center text-stone-500 text-xs py-12">Your shopping bag is empty.</p>';
+        cartTotal.innerText = 'AED 0';
+        return;
+      }
+
+      let total = 0;
+      cartItemsContainer.innerHTML = cart.map((item, idx) => {
+        total += item.price * item.qty;
+        return `
+          <div class="py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img src="${item.img}" class="w-12 h-10 object-cover rounded border border-white/10" />
+              <div>
+                <p class="font-serif text-sm text-white">${item.name}</p>
+                <p class="text-[11px] text-stone-400">AED ${item.price.toLocaleString()} × ${item.qty}</p>
+              </div>
+            </div>
+            <button onclick="removeItem(${idx})" class="text-stone-500 hover:text-red-400 text-xs">Remove</button>
+          </div>
+        `;
+      }).join('');
+
+      cartTotal.innerText = 'AED ' + total.toLocaleString();
+    }
+
+    function removeItem(idx) {
+      cart.splice(idx, 1);
+      renderCart();
+    }
+
+    function toggleCartDrawer() {
+      const d = document.getElementById('cart-drawer');
+      d.classList.toggle('hidden');
+    }
+
+    function checkout() {
+      alert("Thank you for your enquiry. A MOSAKA Dubai concierge will finalize your order.");
+      toggleCartDrawer();
+    }
+
+    function openEnquiryModal(title) {
+      if (title) document.getElementById('enquiry-title').innerText = title;
+      const m = document.getElementById('enquiry-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+    function closeEnquiryModal() {
+      const m = document.getElementById('enquiry-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    function submitEnquiry(e) {
+      e.preventDefault();
+      alert("Thank you! Your architectural enquiry has been submitted. Our Dubai team will respond within 24 hours.");
+      closeEnquiryModal();
+    }
+
+    function openSearchModal() {
+      const m = document.getElementById('search-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      document.getElementById('search-input').focus();
+      filterProducts();
+    }
+    function closeSearchModal() {
+      const m = document.getElementById('search-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    const allProducts = [
+      { name: 'Amezon Basin', price: 'AED 5,950', category: 'Wooden Basins', img: './images/prod_amezon_exact.jpg' },
+      { name: 'Nile Basin', price: 'AED 6,450', category: 'Copper & Brass', img: './images/prod_nile_exact.jpg' },
+      { name: 'Emerald Basin', price: 'AED 7,250', category: 'Statement Basins', img: './images/prod_emerald_exact.jpg' },
+      { name: 'Tectona Basin', price: 'AED 5,850', category: 'Wooden Basins', img: './images/prod_tectona_exact.jpg' },
+    ];
+
+    function filterProducts() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const res = document.getElementById('search-results');
+      const filtered = allProducts.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+
+      res.innerHTML = filtered.map(p => `
+        <div onclick="addToBag('${p.name}', ${p.price.replace(/[^0-9]/g,'')}, '${p.img}'); closeSearchModal();" class="p-2 flex items-center justify-between hover:bg-white/5 cursor-pointer rounded transition-colors">
+          <div class="flex items-center gap-3">
+            <img src="${p.img}" class="w-10 h-8 object-cover rounded border border-white/10" />
+            <div>
+              <p class="font-serif text-sm text-white">${p.name}</p>
+              <p class="text-[10px] text-stone-500">${p.category}</p>
+            </div>
+          </div>
+          <span class="font-serif text-xs text-gold-300">${p.price}</span>
+        </div>
+      `).join('');
+    }
+
+    function openProductQuickView(id) {
+      const p = allProducts.find(item => item.name.toLowerCase().includes(id));
+      if (p) {
+        openEnquiryModal(`Bespoke Consultation: ${p.name}`);
+      }
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').innerText = text;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
