@@ -17,15 +17,12 @@ import {
   X,
   Menu,
   Check,
-  Sparkles,
 } from 'lucide-react';
-import { products } from '../../data/products';
+import { products, categories, materialsList, finishesList } from '../../data/products';
 import { useCart } from '../../context/CartContext';
 import CartDrawer from '../../components/CartDrawer';
 import EnquiryModal from '../../components/EnquiryModal';
 import CustomCursor from '../../components/CustomCursor';
-
-const categories = ['All Products', 'Wash Basins', 'Tapware', 'Accessories'];
 
 const categoryIcons = {
   'All Products': (
@@ -36,13 +33,13 @@ const categoryIcons = {
       <rect x="3" y="14" width="7" height="7" rx="1" />
     </svg>
   ),
-  'Wash Basins': (
+  'Basins': (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 12h16c0 4.4-3.6 8-8 8s-8-3.6-8-8z" />
       <path d="M7 12V6a3 3 0 0 1 6 0v2" />
     </svg>
   ),
-  'Tapware': (
+  'Taps': (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M6 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5" />
       <path d="M4 10h12v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3z" />
@@ -58,40 +55,16 @@ const categoryIcons = {
   ),
 };
 
-const categoryCounts = {
-  'Wash Basins': 48,
-  'Tapware': 36,
-  'Accessories': 12,
-};
-
-const materialsList = [
-  { name: 'Marble', count: 14 },
-  { name: 'Onyx', count: 8 },
-  { name: 'Stone', count: 10 },
-  { name: 'Ceramic', count: 12 },
-  { name: 'Metal', count: 6 },
-  { name: 'Wood', count: 16 },
+const subcategoriesList = [
+  'Wooden Basins',
+  'Statement Basins',
+  'Pedestal Basins',
+  'Waterfall & Flow',
+  'Architectural Monolith',
+  'Sculptural & Classic',
+  'Bidet Systems',
+  'Classical Brass Suite',
 ];
-
-const finishesList = [
-  { name: 'Emerald Green', color: '#164b35' },
-  { name: 'Beige', color: '#d8c2a0' },
-  { name: 'Black', color: '#111111' },
-  { name: 'White', color: '#f2eee6' },
-  { name: 'Copper', color: '#a65d32' },
-  { name: 'Gold', color: '#c69b42' },
-  { name: 'Wood', color: '#69472e' },
-];
-
-const shapesList = ['Oval', 'Round', 'Asymmetric', 'Rectangular'];
-const collectionsList = ['Nature Curated', 'Architectural', 'Imperial'];
-
-const formatPrice = (price) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(price);
 
 export default function ShopPage() {
   const router = useRouter();
@@ -100,10 +73,9 @@ export default function ShopPage() {
   const [category, setCategory] = useState('All Products');
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [selectedFinishes, setSelectedFinishes] = useState([]);
-  const [selectedShapes, setSelectedShapes] = useState([]);
-  const [selectedCollections, setSelectedCollections] = useState([]);
+  const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   const [sort, setSort] = useState('Featured');
-  const [wishlist, setWishlist] = useState([1]);
+  const [wishlist, setWishlist] = useState([1, 4, 14]);
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -112,34 +84,45 @@ export default function ShopPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter products
+  // Filter products strictly from the PDF catalogue
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
+    // Category filter
     if (category !== 'All Products') {
       result = result.filter((p) => p.category === category);
     }
 
+    // Material filter
     if (selectedMaterials.length) {
       result = result.filter((p) =>
         selectedMaterials.some((mat) => p.material.toLowerCase().includes(mat.toLowerCase()))
       );
     }
 
+    // Finish filter
     if (selectedFinishes.length) {
       result = result.filter((p) =>
         selectedFinishes.some((fin) => p.finish.toLowerCase().includes(fin.toLowerCase()))
       );
     }
 
+    // Subcategory filter
+    if (selectedSubcategories.length) {
+      result = result.filter((p) => selectedSubcategories.includes(p.subcategory));
+    }
+
+    // Search filter
     if (search.trim()) {
+      const q = search.toLowerCase();
       result = result.filter((p) =>
-        `${p.name} ${p.material} ${p.category} ${p.tagline || ''}`
+        `${p.name} ${p.material} ${p.category} ${p.subcategory} ${p.tagline || ''}`
           .toLowerCase()
-          .includes(search.toLowerCase())
+          .includes(q)
       );
     }
 
+    // Sorting
     if (sort === 'Price: Low to High') {
       result.sort((a, b) => a.price - b.price);
     } else if (sort === 'Price: High to Low') {
@@ -151,7 +134,7 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [category, selectedMaterials, selectedFinishes, sort, search]);
+  }, [category, selectedMaterials, selectedFinishes, selectedSubcategories, sort, search]);
 
   const toggleFilter = (value, selected, setter) => {
     setter(
@@ -169,8 +152,7 @@ export default function ShopPage() {
   const clearFilters = () => {
     setSelectedMaterials([]);
     setSelectedFinishes([]);
-    setSelectedShapes([]);
-    setSelectedCollections([]);
+    setSelectedSubcategories([]);
     setCategory('All Products');
     setSearch('');
   };
@@ -182,7 +164,7 @@ export default function ShopPage() {
       <EnquiryModal />
 
       {/* ===================================================================== */}
-      {/* 1. TOP NAVIGATION HEADER (Matching Reference Screenshot)               */}
+      {/* 1. TOP NAVIGATION HEADER                                              */}
       {/* ===================================================================== */}
       <header className="relative z-30 flex w-full items-center justify-between border-b border-white/10 px-6 py-5 md:px-12 bg-[#110f0b]/90 backdrop-blur-md">
         {/* Mobile menu trigger */}
@@ -295,7 +277,7 @@ export default function ShopPage() {
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by material, basin shape, or tapware finish..."
+              placeholder="Search by product name, timber species, or tapware finish..."
               className="w-full bg-transparent text-sm outline-none placeholder:text-[#887d6d] text-white"
             />
             {search && (
@@ -320,7 +302,6 @@ export default function ShopPage() {
       {/* 2. HERO SECTION: Cinematic Vanity Scene + Cormorant Garamond Heading */}
       {/* ===================================================================== */}
       <section className="relative flex min-h-[440px] sm:min-h-[480px] md:min-h-[500px] items-center overflow-hidden border-b border-white/10">
-        {/* Background Image Container with Gradient Fade on the Left */}
         <div
           className="absolute inset-0 bg-cover bg-right md:bg-center"
           style={{
@@ -329,30 +310,25 @@ export default function ShopPage() {
           }}
         />
 
-        {/* Ambient Warm Golden Spotlight on the Right */}
         <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-[#d5be9b]/10 blur-[120px] pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-[1536px] mx-auto px-6 sm:px-10 md:px-16 lg:px-20 py-16 sm:py-20">
           <div className="max-w-xl">
-            {/* Small Category Eyebrow with Golden Rule */}
             <div className="mb-5 flex items-center gap-3.5 text-[11px] uppercase tracking-[0.28em] text-[#d5be9b]">
               <span>SHOP</span>
               <span className="h-px w-14 bg-[#8c7657]/70" />
             </div>
 
-            {/* Main Headline */}
             <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-[76px] leading-[0.94] tracking-tight text-[#f0e2ce] font-normal">
               Our
               <br />
               Collections
             </h1>
 
-            {/* Subtitle */}
             <p className="mt-6 max-w-[320px] text-xs sm:text-sm leading-relaxed text-[#c9bda9] font-light">
               Sculptural basins and refined tapware, crafted for exceptional spaces.
             </p>
 
-            {/* Smooth Scroll Anchor Link */}
             <a
               href="#products"
               className="mt-7 inline-flex items-center gap-2.5 border-b border-[#d6b78d] pb-1.5 text-[11px] uppercase tracking-[0.2em] text-[#e8c99d] transition-all hover:text-white hover:border-white"
@@ -365,16 +341,16 @@ export default function ShopPage() {
       </section>
 
       {/* ===================================================================== */}
-      {/* 3. CATEGORY NAVIGATION PILLS BAR                                      */}
+      {/* 3. CATEGORY NAVIGATION PILLS BAR (Basins | Taps | Accessories)        */}
       {/* ===================================================================== */}
       <section className="px-5 py-8 md:px-12 md:py-10 border-b border-white/5 bg-[#14120e]/60">
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
           {categories.map((item) => {
-            const isActive = category === item;
+            const isActive = category === item.label;
             return (
               <button
-                key={item}
-                onClick={() => setCategory(item)}
+                key={item.id}
+                onClick={() => setCategory(item.label)}
                 className={`flex items-center gap-2.5 rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-[11px] uppercase tracking-[0.16em] font-medium transition-all duration-300 ${
                   isActive
                     ? 'bg-[#d5be9b] text-[#110f0b] shadow-[0_2px_16px_rgba(213,190,155,0.25)] font-semibold'
@@ -382,9 +358,11 @@ export default function ShopPage() {
                 }`}
               >
                 <span className={isActive ? 'text-[#110f0b]' : 'text-[#a99a83]'}>
-                  {categoryIcons[item] || null}
+                  {categoryIcons[item.label] || null}
                 </span>
-                <span>{item}</span>
+                <span>
+                  {item.label} ({item.count})
+                </span>
               </button>
             );
           })}
@@ -402,12 +380,11 @@ export default function ShopPage() {
               {category === 'All Products' ? 'Discover' : category}
             </h2>
             <span className="text-xs text-[#a99b85] tracking-wider uppercase">
-              {filteredProducts.length} Products
+              {filteredProducts.length} Catalogue Products
             </span>
           </div>
 
           <div className="flex items-center gap-4 sm:gap-6">
-            {/* Mobile Filters Trigger */}
             <button
               className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#d5c6af] hover:text-white lg:hidden"
               onClick={() => setShowFilters(!showFilters)}
@@ -416,7 +393,6 @@ export default function ShopPage() {
               <span>Filters</span>
             </button>
 
-            {/* Sort Select */}
             <label className="flex items-center gap-2 text-xs text-[#d5c6af]">
               <span className="text-[#887d6d]">Sort by:</span>
               <select
@@ -439,7 +415,6 @@ export default function ShopPage() {
               </select>
             </label>
 
-            {/* View Mode Toggle: Grid & List */}
             <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-white/10 text-stone-400">
               <button
                 onClick={() => setViewMode('grid')}
@@ -465,9 +440,7 @@ export default function ShopPage() {
 
         {/* 2-Column Layout: Sidebar + Product Grid */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[210px_1fr] xl:grid-cols-[230px_1fr]">
-          {/* =================================================================== */}
-          {/* SIDEBAR FILTERS                                                     */}
-          {/* =================================================================== */}
+          {/* SIDEBAR FILTERS */}
           <aside className={`${showFilters ? 'block' : 'hidden'} lg:block pr-2`}>
             <div className="mb-6 flex items-center justify-between">
               <h3 className="font-serif text-xl text-[#f0e2ce]">Filter</h3>
@@ -481,24 +454,24 @@ export default function ShopPage() {
 
             {/* Category Filter Accordion */}
             <FilterGroup title="Category" defaultOpen={true}>
-              {Object.entries(categoryCounts).map(([catName, count]) => {
-                const isChecked = category === catName;
+              {categories.slice(1).map((item) => {
+                const isChecked = category === item.label;
                 return (
                   <label
-                    key={catName}
+                    key={item.id}
                     className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
                         checked={isChecked}
-                        onChange={() => setCategory(isChecked ? 'All Products' : catName)}
+                        onChange={() => setCategory(isChecked ? 'All Products' : item.label)}
                         className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
                       />
-                      <span>{catName}</span>
+                      <span>{item.label}</span>
                     </div>
                     <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
-                      ({count})
+                      ({item.count})
                     </span>
                   </label>
                 );
@@ -554,38 +527,22 @@ export default function ShopPage() {
               ))}
             </FilterGroup>
 
-            {/* Shape Accordion */}
-            <FilterGroup title="Shape" defaultOpen={false}>
-              {shapesList.map((shape) => (
+            {/* Subcategories Accordion */}
+            <FilterGroup title="Subcategory" defaultOpen={false}>
+              {subcategoriesList.map((subcat) => (
                 <label
-                  key={shape}
+                  key={subcat}
                   className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
                 >
                   <input
                     type="checkbox"
-                    checked={selectedShapes.includes(shape)}
-                    onChange={() => toggleFilter(shape, selectedShapes, setSelectedShapes)}
+                    checked={selectedSubcategories.includes(subcat)}
+                    onChange={() =>
+                      toggleFilter(subcat, selectedSubcategories, setSelectedSubcategories)
+                    }
                     className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
                   />
-                  <span>{shape}</span>
-                </label>
-              ))}
-            </FilterGroup>
-
-            {/* Collection Accordion */}
-            <FilterGroup title="Collection" defaultOpen={false}>
-              {collectionsList.map((col) => (
-                <label
-                  key={col}
-                  className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedCollections.includes(col)}
-                    onChange={() => toggleFilter(col, selectedCollections, setSelectedCollections)}
-                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
-                  />
-                  <span>{col}</span>
+                  <span>{subcat}</span>
                 </label>
               ))}
             </FilterGroup>
@@ -627,6 +584,13 @@ export default function ShopPage() {
                           loading="lazy"
                         />
 
+                        {/* Catalogue Page Reference Badge */}
+                        <div className="absolute left-3 top-3 z-10">
+                          <span className="px-2 py-0.5 bg-black/60 backdrop-blur-sm border border-white/10 text-[9px] uppercase tracking-wider text-[#d5be9b] rounded-[2px]">
+                            {product.pdfPage}
+                          </span>
+                        </div>
+
                         {/* Top-Right Wishlist Heart Button */}
                         <button
                           aria-label="Add to wishlist"
@@ -663,14 +627,14 @@ export default function ShopPage() {
                             {product.name}
                           </h3>
                           <p className="mt-1 text-xs text-[#a99a83] font-light">
-                            {product.category}
+                            {product.subcategory} · {product.material}
                           </p>
                         </div>
 
                         {/* Price & Circular Arrow Button */}
                         <div className="flex items-center gap-3 pt-1">
                           <p className="whitespace-nowrap text-sm font-medium text-[#e3c59d] tracking-wide">
-                            {product.priceFormatted || formatPrice(product.price)}
+                            {product.priceFormatted}
                           </p>
 
                           <div className="w-8 h-8 rounded-full border border-white/20 group-hover:border-[#d5be9b] flex items-center justify-center text-stone-400 group-hover:text-[#d5be9b] transition-colors">
@@ -697,9 +661,7 @@ export default function ShopPage() {
               </div>
             )}
 
-            {/* =================================================================== */}
-            {/* PAGINATION (Matching Reference Screenshot: < 1 2 3 4 ... 8 >)       */}
-            {/* =================================================================== */}
+            {/* PAGINATION */}
             {filteredProducts.length > 0 && (
               <div className="mt-16 sm:mt-20 flex items-center justify-center gap-2.5 sm:gap-3 text-xs">
                 <button
@@ -744,32 +706,8 @@ export default function ShopPage() {
                 </button>
 
                 <button
-                  onClick={() => setCurrentPage(4)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
-                    currentPage === 4
-                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  4
-                </button>
-
-                <span className="text-stone-500 px-1">...</span>
-
-                <button
-                  onClick={() => setCurrentPage(8)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
-                    currentPage === 8
-                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  8
-                </button>
-
-                <button
                   aria-label="Next page"
-                  onClick={() => setCurrentPage(Math.min(8, currentPage + 1))}
+                  onClick={() => setCurrentPage(Math.min(3, currentPage + 1))}
                   className="h-8 w-8 rounded-full border border-white/15 hover:border-[#d5be9b] text-stone-400 hover:text-white flex items-center justify-center transition-colors"
                 >
                   <ChevronRight size={14} />
@@ -781,7 +719,7 @@ export default function ShopPage() {
       </section>
 
       {/* ===================================================================== */}
-      {/* 5. PRODUCT QUICK VIEW MODAL (Matching Reference)                      */}
+      {/* 5. PRODUCT QUICK VIEW MODAL                                           */}
       {/* ===================================================================== */}
       {selectedProduct && (
         <div
@@ -806,6 +744,9 @@ export default function ShopPage() {
                 alt={selectedProduct.name}
                 className="h-full w-full object-cover"
               />
+              <span className="absolute bottom-3 left-3 px-2 py-0.5 bg-black/70 border border-white/10 text-[9px] uppercase tracking-wider text-[#d5be9b]">
+                {selectedProduct.pdfPage}
+              </span>
             </div>
 
             <div className="flex flex-col justify-between p-8 md:p-12">
@@ -820,7 +761,7 @@ export default function ShopPage() {
                   {selectedProduct.description}
                 </p>
                 <p className="mt-6 font-serif text-2xl text-[#e4c59d]">
-                  {selectedProduct.priceFormatted || formatPrice(selectedProduct.price)}
+                  {selectedProduct.priceFormatted}
                 </p>
               </div>
 
@@ -851,7 +792,7 @@ export default function ShopPage() {
       )}
 
       {/* ===================================================================== */}
-      {/* 6. FOOTER (Matching Reference)                                         */}
+      {/* 6. FOOTER                                                             */}
       {/* ===================================================================== */}
       <footer className="border-t border-white/10 px-6 py-14 md:px-16 lg:px-20 bg-[#0d0b08]">
         <div className="w-full max-w-[1536px] mx-auto flex flex-col justify-between gap-10 md:flex-row items-start">
@@ -859,7 +800,7 @@ export default function ShopPage() {
             <h2 className="font-serif text-3xl tracking-[0.2em] text-[#f2eee6]">MOSAKA</h2>
             <p className="mt-1 text-[9px] uppercase tracking-[0.55em] text-[#a99a83]">BATHWARE</p>
             <p className="mt-5 max-w-xs text-xs leading-relaxed text-[#a99b85] font-light">
-              Where Elements Become Art. Sculptural forms and refined materials for exceptional spaces.
+              Where Elements Become Art. Sculptural forms and refined materials for exceptional spaces. Dubai, United Arab Emirates.
             </p>
           </div>
 
@@ -867,7 +808,7 @@ export default function ShopPage() {
             <div className="space-y-3.5">
               <p className="text-[#e2c39a] font-medium tracking-wider uppercase text-[11px]">Explore</p>
               <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/shop">
-                Shop
+                Shop Catalogue
               </Link>
               <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#collections">
                 Collections
@@ -893,7 +834,7 @@ export default function ShopPage() {
 
         <div className="w-full max-w-[1536px] mx-auto mt-12 flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-[10.5px] text-[#857966] md:flex-row">
           <p>© 2026 MOSAKA BATHWARE. All rights reserved.</p>
-          <p>Designed for exceptional spaces. Dubai • Worldwide.</p>
+          <p>Dubai, United Arab Emirates • Worldwide Shipping.</p>
         </div>
       </footer>
     </main>

@@ -52,3 +52,4 @@ if os.path.exists('public/images/products/tap_waterfall_spout_gold.jpg'):
 if os.path.exists('public/images/products/acc_classical_oval_towel_ring.jpg'):
     Image.open('public/images/products/acc_classical_oval_towel_ring.jpg').save('public/images/stone-accessory.jpg')
     print('Saved stone-accessory.jpg')
+
