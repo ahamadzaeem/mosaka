@@ -301,16 +301,16 @@ export default function ShopPage() {
       {/* ===================================================================== */}
       {/* 2. HERO SECTION: Cinematic Vanity Scene + Cormorant Garamond Heading */}
       {/* ===================================================================== */}
-      <section className="relative flex min-h-[440px] sm:min-h-[480px] md:min-h-[500px] items-center overflow-hidden border-b border-white/10">
+      <section className="relative flex min-h-[460px] sm:min-h-[500px] md:min-h-[520px] items-center overflow-hidden border-b border-white/10">
         <div
-          className="absolute inset-0 bg-cover bg-right md:bg-center"
+          className="absolute inset-0 bg-cover bg-[75%_center] md:bg-right lg:bg-right"
           style={{
             backgroundImage:
-              "linear-gradient(90deg, rgba(17,15,11,1) 0%, rgba(17,15,11,0.92) 36%, rgba(17,15,11,0.4) 65%, rgba(17,15,11,0.05) 100%), url('/images/shop-hero-vanity.jpg')",
+              "linear-gradient(90deg, rgba(17,15,11,1) 0%, rgba(17,15,11,0.94) 34%, rgba(17,15,11,0.55) 60%, rgba(17,15,11,0.1) 85%, transparent 100%), url('/images/shop-hero-teak-vanity.jpg')",
           }}
         />
 
-        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-[#d5be9b]/10 blur-[120px] pointer-events-none" />
+        <div className="absolute top-0 right-1/4 w-[450px] h-[450px] bg-[#d5be9b]/15 blur-[120px] pointer-events-none" />
 
         <div className="relative z-10 w-full max-w-[1536px] mx-auto px-6 sm:px-10 md:px-16 lg:px-20 py-16 sm:py-20">
           <div className="max-w-xl">
