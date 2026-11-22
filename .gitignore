@@ -20,6 +20,9 @@ lerna-debug.log*
 .env*.local
 .env
 
+# Temporary Extraction & Scratch
+scripts/pdf_pages/
+
 # Editor & OS
 .vscode/*
 !.vscode/extensions.json

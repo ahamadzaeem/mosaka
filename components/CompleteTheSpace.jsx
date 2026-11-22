@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCart } from '../context/CartContext';
@@ -98,15 +99,15 @@ export default function CompleteTheSpace() {
             </p>
 
             <div className="space-text-anim">
-              <button
-                onClick={() => openEnquiry('Curated Complete Space Consultation')}
+              <Link
+                href="/shop?category=accessories"
                 className="inline-flex items-center gap-3 px-6 sm:px-7 py-3 sm:py-3.5 bg-transparent border border-white/30 hover:border-gold-300 text-stone-200 hover:text-white text-[10.5px] uppercase tracking-[0.24em] transition-all duration-300 group cursor-pointer shadow-lg hover:shadow-gold-400/10"
               >
                 <span>EXPLORE ACCESSORIES</span>
                 <span className="text-stone-400 group-hover:text-gold-300 group-hover:translate-x-1 transition-transform">
                   →
                 </span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

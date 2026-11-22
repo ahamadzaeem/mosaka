@@ -1,8 +1,10 @@
 import './globals.css';
+import Providers from '../components/Providers';
 
 export const metadata = {
   title: 'MOSAKA BATHWARE | Where Elements Become Art',
-  description: 'Sculptural bathware for contemporary living. Hand-carved live edge teak basins, hand-hammered copper, and rare verde marble.',
+  description:
+    'Sculptural bathware for contemporary living. Hand-carved live edge teak basins, distinctive designer taps, and refined classical accessories. Dubai, United Arab Emirates.',
   icons: {
     icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90" fill="%23d4b47d">M</text></svg>',
   },
@@ -20,9 +22,8 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="antialiased selection:bg-[#d4b47d]/30 selection:text-white overflow-x-hidden">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
-

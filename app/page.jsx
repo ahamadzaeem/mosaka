@@ -88,9 +88,5 @@ function PageContent() {
 }
 
 export default function Home() {
-  return (
-    <CartProvider>
-      <PageContent />
-    </CartProvider>
-  );
+  return <PageContent />;
 }

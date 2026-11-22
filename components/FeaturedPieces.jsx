@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ShoppingBag } from 'lucide-react';
@@ -13,6 +14,7 @@ if (typeof window !== 'undefined') {
 const featuredItems = [
   {
     id: 'amezon',
+    slug: 'tectona-raw-live-edge-basin',
     name: 'Amezon Basin',
     price: 5950,
     priceFormatted: 'AED 5,950',
@@ -24,6 +26,7 @@ const featuredItems = [
   },
   {
     id: 'nile',
+    slug: 'satin-brass-pill-vessel-basin',
     name: 'Nile Basin',
     price: 6450,
     priceFormatted: 'AED 6,450',
@@ -35,6 +38,7 @@ const featuredItems = [
   },
   {
     id: 'emerald',
+    slug: 'emerald-jade-wave-basin',
     name: 'Emerald Basin',
     price: 7250,
     priceFormatted: 'AED 7,250',
@@ -46,6 +50,7 @@ const featuredItems = [
   },
   {
     id: 'tectona',
+    slug: 'fluted-scallop-teak-basin',
     name: 'Tectona Basin',
     price: 5850,
     priceFormatted: 'AED 5,850',
@@ -59,7 +64,7 @@ const featuredItems = [
 
 export default function FeaturedPieces() {
   const sectionRef = useRef(null);
-  const { addToCart, setQuickViewProduct, setIsSearchOpen } = useCart();
+  const { addToCart, setQuickViewProduct } = useCart();
 
   useEffect(() => {
     if (typeof window === 'undefined' || !sectionRef.current) return;
@@ -140,18 +145,18 @@ export default function FeaturedPieces() {
           <h2 className="text-xs sm:text-[13px] font-medium uppercase tracking-[0.28em] text-white/90">
             FEATURED PIECES
           </h2>
-          <button
-            onClick={() => setIsSearchOpen(true)}
+          <Link
+            href="/shop"
             className="group flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-stone-400 hover:text-gold-300 transition-colors"
           >
             <span>VIEW ALL PRODUCTS</span>
             <span className="group-hover:translate-x-1.5 transition-transform text-stone-400 group-hover:text-gold-300">
               →
             </span>
-          </button>
+          </Link>
         </div>
 
-        {/* 4 Products Row - Clean & Borderless matching reference */}
+        {/* 4 Products Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
           {featuredItems.map((product) => (
             <div
@@ -161,31 +166,29 @@ export default function FeaturedPieces() {
               className="product-col-item group cursor-pointer flex flex-col justify-between"
             >
               {/* Product Basin Image Container with 3D Micro-Tilt */}
-              <div
-                onClick={() => setQuickViewProduct(product)}
-                className="tilt-target relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5 transition-shadow duration-500"
-              >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  onError={(e) => {
-                    if (product.hires) {
-                      e.currentTarget.src = product.hires;
-                    }
-                  }}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
+              <div className="tilt-target relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5 transition-shadow duration-500">
+                <Link href={`/shop/${product.slug}`} className="block w-full h-full">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    onError={(e) => {
+                      if (product.hires) {
+                        e.currentTarget.src = product.hires;
+                      }
+                    }}
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                </Link>
               </div>
 
               {/* Product Info & Shopping Bag Outline Icon */}
               <div className="flex items-end justify-between pt-1">
                 <div>
-                  <h4
-                    onClick={() => setQuickViewProduct(product)}
-                    className="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug"
-                  >
-                    {product.name}
-                  </h4>
+                  <Link href={`/shop/${product.slug}`}>
+                    <h4 className="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                      {product.name}
+                    </h4>
+                  </Link>
                   <p className="text-xs text-stone-400 font-light mt-1">
                     {product.priceFormatted}
                   </p>
