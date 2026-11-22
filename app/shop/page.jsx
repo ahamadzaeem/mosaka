@@ -1,315 +1,922 @@
 'use client';
 
-import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { products, categories, materialsFilter } from '../../data/products';
+import { useRouter } from 'next/navigation';
+import {
+  Search,
+  Heart,
+  ShoppingBag,
+  ChevronDown,
+  ChevronRight,
+  ChevronLeft,
+  SlidersHorizontal,
+  LayoutGrid,
+  List,
+  ArrowUpRight,
+  X,
+  Menu,
+  Check,
+  Sparkles,
+} from 'lucide-react';
+import { products } from '../../data/products';
 import { useCart } from '../../context/CartContext';
-import { ShoppingBag, Eye, ArrowUpRight } from 'lucide-react';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
 import CartDrawer from '../../components/CartDrawer';
 import EnquiryModal from '../../components/EnquiryModal';
-import QuickViewModal from '../../components/QuickViewModal';
-import SearchModal from '../../components/SearchModal';
 import CustomCursor from '../../components/CustomCursor';
 
-function ShopContent() {
-  const searchParams = useSearchParams();
-  const categoryParam = searchParams.get('category');
+const categories = ['All Products', 'Wash Basins', 'Tapware', 'Accessories'];
 
-  const [selectedCategory, setSelectedCategory] = useState(categoryParam || 'all');
-  const [selectedMaterial, setSelectedMaterial] = useState('All Materials');
-  const [sortBy, setSortBy] = useState('featured');
+const categoryIcons = {
+  'All Products': (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="3" width="7" height="7" rx="1" />
+      <rect x="14" y="14" width="7" height="7" rx="1" />
+      <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  ),
+  'Wash Basins': (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M4 12h16c0 4.4-3.6 8-8 8s-8-3.6-8-8z" />
+      <path d="M7 12V6a3 3 0 0 1 6 0v2" />
+    </svg>
+  ),
+  'Tapware': (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <path d="M6 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5" />
+      <path d="M4 10h12v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3z" />
+      <path d="M10 17v4" />
+      <path d="M7 21h6" />
+    </svg>
+  ),
+  'Accessories': (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="13" width="18" height="6" rx="2" />
+      <path d="M7 13V8a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v5" />
+    </svg>
+  ),
+};
 
-  const { addToCart, setQuickViewProduct, openEnquiry } = useCart();
+const categoryCounts = {
+  'Wash Basins': 48,
+  'Tapware': 36,
+  'Accessories': 12,
+};
 
-  useEffect(() => {
-    if (categoryParam) {
-      setSelectedCategory(categoryParam);
-    }
-  }, [categoryParam]);
+const materialsList = [
+  { name: 'Marble', count: 14 },
+  { name: 'Onyx', count: 8 },
+  { name: 'Stone', count: 10 },
+  { name: 'Ceramic', count: 12 },
+  { name: 'Metal', count: 6 },
+  { name: 'Wood', count: 16 },
+];
 
-  // Filtered and sorted products
+const finishesList = [
+  { name: 'Emerald Green', color: '#164b35' },
+  { name: 'Beige', color: '#d8c2a0' },
+  { name: 'Black', color: '#111111' },
+  { name: 'White', color: '#f2eee6' },
+  { name: 'Copper', color: '#a65d32' },
+  { name: 'Gold', color: '#c69b42' },
+  { name: 'Wood', color: '#69472e' },
+];
+
+const shapesList = ['Oval', 'Round', 'Asymmetric', 'Rectangular'];
+const collectionsList = ['Nature Curated', 'Architectural', 'Imperial'];
+
+const formatPrice = (price) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(price);
+
+export default function ShopPage() {
+  const router = useRouter();
+  const { cartCount, setIsCartOpen, addToCart } = useCart();
+
+  const [category, setCategory] = useState('All Products');
+  const [selectedMaterials, setSelectedMaterials] = useState([]);
+  const [selectedFinishes, setSelectedFinishes] = useState([]);
+  const [selectedShapes, setSelectedShapes] = useState([]);
+  const [selectedCollections, setSelectedCollections] = useState([]);
+  const [sort, setSort] = useState('Featured');
+  const [wishlist, setWishlist] = useState([1]);
+  const [search, setSearch] = useState('');
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [viewMode, setViewMode] = useState('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Filter products
   const filteredProducts = useMemo(() => {
-    let list = [...products];
+    let result = [...products];
 
-    // Category filter
-    if (selectedCategory !== 'all') {
-      list = list.filter((p) => p.category === selectedCategory);
+    if (category !== 'All Products') {
+      result = result.filter((p) => p.category === category);
     }
 
-    // Material filter
-    if (selectedMaterial !== 'All Materials') {
-      list = list.filter((p) =>
-        p.material.toLowerCase().includes(selectedMaterial.toLowerCase().replace('all', '').trim())
+    if (selectedMaterials.length) {
+      result = result.filter((p) =>
+        selectedMaterials.some((mat) => p.material.toLowerCase().includes(mat.toLowerCase()))
       );
     }
 
-    // Sorting
-    if (sortBy === 'price-low') {
-      list.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      list.sort((a, b) => b.price - a.price);
-    } else {
-      list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    if (selectedFinishes.length) {
+      result = result.filter((p) =>
+        selectedFinishes.some((fin) => p.finish.toLowerCase().includes(fin.toLowerCase()))
+      );
     }
 
-    return list;
-  }, [selectedCategory, selectedMaterial, sortBy]);
+    if (search.trim()) {
+      result = result.filter((p) =>
+        `${p.name} ${p.material} ${p.category} ${p.tagline || ''}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      );
+    }
+
+    if (sort === 'Price: Low to High') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sort === 'Price: High to Low') {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sort === 'Name: A to Z') {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      result.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    }
+
+    return result;
+  }, [category, selectedMaterials, selectedFinishes, sort, search]);
+
+  const toggleFilter = (value, selected, setter) => {
+    setter(
+      selected.includes(value) ? selected.filter((item) => item !== value) : [...selected, value]
+    );
+  };
+
+  const toggleWishlist = (e, id) => {
+    e.stopPropagation();
+    setWishlist((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+    );
+  };
+
+  const clearFilters = () => {
+    setSelectedMaterials([]);
+    setSelectedFinishes([]);
+    setSelectedShapes([]);
+    setSelectedCollections([]);
+    setCategory('All Products');
+    setSearch('');
+  };
 
   return (
-    <div className="w-full max-w-[1536px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-stone-500 mb-8 sm:mb-10">
-        <Link href="/" className="hover:text-stone-300 transition-colors">
-          Home
-        </Link>
-        <span>/</span>
-        <span className="text-gold-300">Catalogue & Creations</span>
-      </nav>
+    <main className="min-h-screen bg-[#110f0b] text-[#eee0c9] font-sans selection:bg-[#d5be9b] selection:text-[#110f0b]">
+      <CustomCursor />
+      <CartDrawer />
+      <EnquiryModal />
 
-      {/* Header Section */}
-      <div className="border-b border-white/10 pb-8 sm:pb-12 mb-10 sm:mb-14">
-        <div className="max-w-3xl">
-          <span className="text-[11px] sm:text-xs font-medium uppercase tracking-[0.28em] text-[#c5a059] block mb-3">
-            MOSAKA BATHWARE • DUBAI, UAE
+      {/* ===================================================================== */}
+      {/* 1. TOP NAVIGATION HEADER (Matching Reference Screenshot)               */}
+      {/* ===================================================================== */}
+      <header className="relative z-30 flex w-full items-center justify-between border-b border-white/10 px-6 py-5 md:px-12 bg-[#110f0b]/90 backdrop-blur-md">
+        {/* Mobile menu trigger */}
+        <button
+          onClick={() => setMobileMenu(!mobileMenu)}
+          className="text-[#e9d8bd] md:hidden p-1"
+          aria-label="Toggle menu"
+        >
+          <Menu size={22} />
+        </button>
+
+        {/* Left Navigation Links */}
+        <nav className="hidden items-center gap-9 text-[12px] tracking-[0.14em] uppercase font-medium md:flex">
+          <Link href="/" className="transition hover:text-white">
+            Home
+          </Link>
+          <Link href="/#collections" className="transition hover:text-white">
+            Collections
+          </Link>
+          <Link href="/shop" className="border-b-2 border-[#d5be9b] pb-1 text-[#e8c99d] font-semibold">
+            Shop
+          </Link>
+          <Link href="/#about" className="transition hover:text-white">
+            About
+          </Link>
+        </nav>
+
+        {/* Center Brand Identity */}
+        <Link
+          href="/"
+          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer"
+        >
+          <span className="font-serif text-2xl tracking-[0.22em] text-[#f2eee6] group-hover:text-[#e4c59d] transition-colors">
+            MOSAKA
           </span>
-          <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl text-white font-normal tracking-tight leading-[1.1] mb-5">
-            The Architectural Catalogue.
-          </h1>
-          <p className="text-stone-400 text-sm sm:text-base font-light leading-relaxed max-w-2xl">
-            A curated collection of sculptural wooden basins, distinctive designer taps, and refined classical accessories. Each piece is selected for its individuality, craftsmanship, and enduring architectural presence.
-          </p>
-        </div>
+          <span className="text-[7.5px] uppercase tracking-[0.55em] text-[#a99a83] -mt-1 font-light">
+            BATHWARE
+          </span>
+        </Link>
 
-        {/* Category Filter Pills Bar */}
-        <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-xs uppercase tracking-[0.18em] transition-all duration-300 ${
-                    isActive
-                      ? 'bg-[#c5a059] text-stone-950 font-semibold shadow-[0_0_20px_rgba(197,160,89,0.3)]'
-                      : 'bg-white/5 text-stone-400 hover:text-white hover:bg-white/10 border border-white/5'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Material & Sorting Controls */}
-          <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-            <select
-              value={selectedMaterial}
-              onChange={(e) => setSelectedMaterial(e.target.value)}
-              className="bg-[#141312] border border-white/10 text-stone-300 text-xs tracking-wider rounded-md px-3.5 py-2 focus:outline-none focus:border-gold-400"
-            >
-              {materialsFilter.map((mat) => (
-                <option key={mat} value={mat} className="bg-[#141312] text-stone-300">
-                  {mat}
-                </option>
-              ))}
-            </select>
-
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-[#141312] border border-white/10 text-stone-300 text-xs tracking-wider rounded-md px-3.5 py-2 focus:outline-none focus:border-gold-400"
-            >
-              <option value="featured">Featured First</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Results Summary Bar */}
-      <div className="flex items-center justify-between text-xs text-stone-400 mb-8 tracking-wider uppercase">
-        <span>
-          Showing <strong className="text-white font-medium">{filteredProducts.length}</strong> distinctive pieces
-        </span>
-        <span className="text-stone-500 hidden sm:inline">
-          Prices in AED • Private Atelier Consultation Available
-        </span>
-      </div>
-
-      {/* Product Grid */}
-      {filteredProducts.length === 0 ? (
-        <div className="py-24 text-center border border-white/5 rounded-lg bg-white/[0.02]">
-          <p className="font-serif text-xl text-stone-300 mb-2">No matching pieces found</p>
-          <p className="text-xs text-stone-500 uppercase tracking-widest mb-6">
-            Try selecting a different material or category
-          </p>
+        {/* Right Action Icons: Search, Wishlist, Cart */}
+        <div className="flex items-center gap-5 sm:gap-6">
           <button
-            onClick={() => {
-              setSelectedCategory('all');
-              setSelectedMaterial('All Materials');
-            }}
-            className="px-6 py-2.5 bg-gold-400 text-stone-950 font-medium text-xs uppercase tracking-widest rounded hover:bg-gold-300 transition-colors"
+            aria-label="Search products"
+            onClick={() => setShowSearch(!showSearch)}
+            className="text-stone-300 hover:text-white transition-colors"
           >
-            Reset Filters
+            <Search size={19} strokeWidth={1.4} />
+          </button>
+
+          <button
+            aria-label="Wishlist"
+            onClick={() => {}}
+            className="relative text-stone-300 hover:text-white transition-colors"
+          >
+            <Heart size={19} strokeWidth={1.4} />
+            {wishlist.length > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#d5be9b] text-[9px] font-bold text-[#110f0b]">
+                {wishlist.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            aria-label="Shopping bag"
+            onClick={() => setIsCartOpen(true)}
+            className="relative text-stone-300 hover:text-white transition-colors"
+          >
+            <ShoppingBag size={19} strokeWidth={1.4} />
+            {cartCount > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-[#d5be9b] text-[9px] font-bold text-[#110f0b]">
+                {cartCount}
+              </span>
+            )}
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="group flex flex-col justify-between bg-[#0e0d0c] rounded-[4px] p-3.5 sm:p-4 border border-white/[0.06] hover:border-[#c5a059]/40 transition-all duration-500 hover:shadow-[0_12px_32px_rgba(0,0,0,0.6)]"
-            >
-              {/* Image Container with Badge */}
-              <div className="relative w-full aspect-[1.3/1] overflow-hidden bg-[#161513] rounded-[2px] mb-4">
-                {product.badge && (
-                  <div className="absolute top-2.5 left-2.5 z-10">
-                    <span className="px-2.5 py-1 bg-[#0a0a09]/80 backdrop-blur-md border border-white/10 text-[9px] uppercase tracking-[0.2em] text-[#e6ca85] rounded-[2px]">
-                      {product.badge}
-                    </span>
-                  </div>
-                )}
+      </header>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setQuickViewProduct(product);
-                  }}
-                  className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-stone-300 hover:text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
-                  title="Quick View"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                </button>
-
-                <Link href={`/shop/${product.slug}`} className="block w-full h-full">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                    loading="lazy"
-                  />
-                </Link>
-              </div>
-
-              {/* Product Details */}
-              <div className="flex flex-col flex-grow justify-between">
-                <div>
-                  <span className="text-[10px] uppercase tracking-[0.22em] text-stone-400 block mb-1">
-                    {product.subcategory}
-                  </span>
-
-                  <Link href={`/shop/${product.slug}`} className="block">
-                    <h3 className="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 transition-colors font-normal leading-snug">
-                      {product.name}
-                    </h3>
-                  </Link>
-
-                  <p className="text-xs text-stone-400 font-light mt-1.5 line-clamp-2 leading-relaxed">
-                    {product.tagline}
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between pt-4 mt-4 border-t border-white/5">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-wider text-stone-500 block">
-                      Price
-                    </span>
-                    <p className="text-sm font-medium text-[#e6ca85] tracking-wide">
-                      {product.priceFormatted}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => addToCart(product)}
-                      className="p-2.5 rounded bg-white/5 hover:bg-gold-400 hover:text-stone-950 text-stone-300 transition-all duration-300"
-                      title="Add to project collection"
-                      aria-label={`Add ${product.name} to bag`}
-                    >
-                      <ShoppingBag className="w-4 h-4" />
-                    </button>
-
-                    <Link
-                      href={`/shop/${product.slug}`}
-                      className="p-2.5 rounded bg-white/5 hover:bg-white/15 text-stone-300 hover:text-white transition-colors"
-                      title="View complete specifications"
-                    >
-                      <ArrowUpRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
+      {/* Mobile Menu Drawer */}
+      {mobileMenu && (
+        <div className="fixed inset-0 z-50 flex flex-col gap-8 bg-[#110f0b] p-10 pt-24 text-2xl font-serif md:hidden border-b border-white/10 animate-fade-in">
+          <button
+            className="absolute right-6 top-6 text-stone-400 hover:text-white"
+            onClick={() => setMobileMenu(false)}
+            aria-label="Close menu"
+          >
+            <X size={24} />
+          </button>
+          <Link href="/" onClick={() => setMobileMenu(false)}>
+            Home
+          </Link>
+          <Link href="/#collections" onClick={() => setMobileMenu(false)}>
+            Collections
+          </Link>
+          <Link href="/shop" onClick={() => setMobileMenu(false)} className="text-[#e4c59d]">
+            Shop All Catalog
+          </Link>
+          <Link href="/#about" onClick={() => setMobileMenu(false)}>
+            About Mosaka
+          </Link>
         </div>
       )}
 
-      {/* Bottom Editorial Callout */}
-      <div className="mt-20 sm:mt-24 p-8 sm:p-12 lg:p-16 rounded-[4px] bg-gradient-to-r from-[#141312] via-[#161514] to-[#121110] border border-white/10 relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <span className="text-[10px] uppercase tracking-[0.28em] text-[#c5a059] block mb-3 font-semibold">
-            BESPOKE & ARCHITECTURAL COMMISSIONS
-          </span>
-          <h2 className="font-serif text-2xl sm:text-4xl text-white font-normal mb-4">
-            Require Custom Dimensions or Rare Timber Spec?
-          </h2>
-          <p className="text-stone-400 text-xs sm:text-sm font-light leading-relaxed mb-6">
-            Our Dubai atelier works directly with architects, interior designers, and private villa owners to carve bespoke dimensions, source rare teak root burls, or apply custom PVD metallic finishes.
-          </p>
-          <button
-            onClick={() => openEnquiry('Custom Architectural Sourcing Request')}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-[#c5a059] text-stone-950 text-xs uppercase tracking-[0.2em] font-semibold rounded-[2px] hover:bg-[#d4af37] transition-all shadow-[0_4px_20px_rgba(197,160,89,0.25)]"
-          >
-            <span>Request Bespoke Consultation</span>
-            <span>→</span>
-          </button>
+      {/* Expandable Search Bar */}
+      {showSearch && (
+        <div className="relative z-40 border-b border-white/10 bg-[#1c1813] px-6 py-4 md:px-12 animate-fade-in">
+          <div className="mx-auto flex max-w-5xl items-center gap-4">
+            <Search size={18} className="text-[#d5be9b]" />
+            <input
+              autoFocus
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by material, basin shape, or tapware finish..."
+              className="w-full bg-transparent text-sm outline-none placeholder:text-[#887d6d] text-white"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-xs uppercase tracking-wider text-stone-400 hover:text-white"
+              >
+                Clear
+              </button>
+            )}
+            <button
+              onClick={() => setShowSearch(false)}
+              className="text-stone-400 hover:text-white"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 2. HERO SECTION: Cinematic Vanity Scene + Cormorant Garamond Heading */}
+      {/* ===================================================================== */}
+      <section className="relative flex min-h-[440px] sm:min-h-[480px] md:min-h-[500px] items-center overflow-hidden border-b border-white/10">
+        {/* Background Image Container with Gradient Fade on the Left */}
+        <div
+          className="absolute inset-0 bg-cover bg-right md:bg-center"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(17,15,11,1) 0%, rgba(17,15,11,0.92) 36%, rgba(17,15,11,0.4) 65%, rgba(17,15,11,0.05) 100%), url('/images/shop-hero-vanity.jpg')",
+          }}
+        />
+
+        {/* Ambient Warm Golden Spotlight on the Right */}
+        <div className="absolute top-0 right-1/4 w-[400px] h-[400px] bg-[#d5be9b]/10 blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 w-full max-w-[1536px] mx-auto px-6 sm:px-10 md:px-16 lg:px-20 py-16 sm:py-20">
+          <div className="max-w-xl">
+            {/* Small Category Eyebrow with Golden Rule */}
+            <div className="mb-5 flex items-center gap-3.5 text-[11px] uppercase tracking-[0.28em] text-[#d5be9b]">
+              <span>SHOP</span>
+              <span className="h-px w-14 bg-[#8c7657]/70" />
+            </div>
+
+            {/* Main Headline */}
+            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-[76px] leading-[0.94] tracking-tight text-[#f0e2ce] font-normal">
+              Our
+              <br />
+              Collections
+            </h1>
+
+            {/* Subtitle */}
+            <p className="mt-6 max-w-[320px] text-xs sm:text-sm leading-relaxed text-[#c9bda9] font-light">
+              Sculptural basins and refined tapware, crafted for exceptional spaces.
+            </p>
+
+            {/* Smooth Scroll Anchor Link */}
+            <a
+              href="#products"
+              className="mt-7 inline-flex items-center gap-2.5 border-b border-[#d6b78d] pb-1.5 text-[11px] uppercase tracking-[0.2em] text-[#e8c99d] transition-all hover:text-white hover:border-white"
+            >
+              <span>Explore collection</span>
+              <ArrowUpRight size={14} />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ===================================================================== */}
+      {/* 3. CATEGORY NAVIGATION PILLS BAR                                      */}
+      {/* ===================================================================== */}
+      <section className="px-5 py-8 md:px-12 md:py-10 border-b border-white/5 bg-[#14120e]/60">
+        <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
+          {categories.map((item) => {
+            const isActive = category === item;
+            return (
+              <button
+                key={item}
+                onClick={() => setCategory(item)}
+                className={`flex items-center gap-2.5 rounded-full px-5 sm:px-7 py-2.5 sm:py-3 text-[11px] uppercase tracking-[0.16em] font-medium transition-all duration-300 ${
+                  isActive
+                    ? 'bg-[#d5be9b] text-[#110f0b] shadow-[0_2px_16px_rgba(213,190,155,0.25)] font-semibold'
+                    : 'border border-[#463a2b] text-[#d5c6af] hover:border-[#d5be9b] hover:text-white bg-transparent'
+                }`}
+              >
+                <span className={isActive ? 'text-[#110f0b]' : 'text-[#a99a83]'}>
+                  {categoryIcons[item] || null}
+                </span>
+                <span>{item}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ===================================================================== */}
+      {/* 4. MAIN PRODUCT CATALOG AREA: Sidebar Filters + 2-Column Grid          */}
+      {/* ===================================================================== */}
+      <section id="products" className="w-full max-w-[1536px] mx-auto px-6 sm:px-10 md:px-14 py-12 sm:py-16">
+        {/* Top Header Bar inside Products Section */}
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+          <div className="flex items-baseline gap-4">
+            <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e2ce] font-normal">
+              {category === 'All Products' ? 'Discover' : category}
+            </h2>
+            <span className="text-xs text-[#a99b85] tracking-wider uppercase">
+              {filteredProducts.length} Products
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4 sm:gap-6">
+            {/* Mobile Filters Trigger */}
+            <button
+              className="flex items-center gap-2 text-xs uppercase tracking-wider text-[#d5c6af] hover:text-white lg:hidden"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <SlidersHorizontal size={15} />
+              <span>Filters</span>
+            </button>
+
+            {/* Sort Select */}
+            <label className="flex items-center gap-2 text-xs text-[#d5c6af]">
+              <span className="text-[#887d6d]">Sort by:</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="cursor-pointer bg-transparent text-[#e4c59d] text-xs outline-none font-medium pr-1"
+              >
+                <option value="Featured" className="bg-[#17140f] text-white">
+                  Featured
+                </option>
+                <option value="Price: Low to High" className="bg-[#17140f] text-white">
+                  Price: Low to High
+                </option>
+                <option value="Price: High to Low" className="bg-[#17140f] text-white">
+                  Price: High to Low
+                </option>
+                <option value="Name: A to Z" className="bg-[#17140f] text-white">
+                  Name: A to Z
+                </option>
+              </select>
+            </label>
+
+            {/* View Mode Toggle: Grid & List */}
+            <div className="hidden sm:flex items-center gap-1.5 pl-3 border-l border-white/10 text-stone-400">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded transition-colors ${
+                  viewMode === 'grid' ? 'text-[#d5be9b]' : 'hover:text-white'
+                }`}
+                title="Grid view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded transition-colors ${
+                  viewMode === 'list' ? 'text-[#d5be9b]' : 'hover:text-white'
+                }`}
+                title="List view"
+              >
+                <List size={16} />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10 pointer-events-none hidden md:block">
-          <img
-            src="/images/prod_amezon_exact.jpg"
-            alt="Teak Wood Texture"
-            className="w-full h-full object-cover"
-          />
+        {/* 2-Column Layout: Sidebar + Product Grid */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[210px_1fr] xl:grid-cols-[230px_1fr]">
+          {/* =================================================================== */}
+          {/* SIDEBAR FILTERS                                                     */}
+          {/* =================================================================== */}
+          <aside className={`${showFilters ? 'block' : 'hidden'} lg:block pr-2`}>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="font-serif text-xl text-[#f0e2ce]">Filter</h3>
+              <button
+                onClick={clearFilters}
+                className="text-[11px] uppercase tracking-wider text-[#c7a87d] hover:text-white underline underline-offset-4"
+              >
+                Clear All
+              </button>
+            </div>
+
+            {/* Category Filter Accordion */}
+            <FilterGroup title="Category" defaultOpen={true}>
+              {Object.entries(categoryCounts).map(([catName, count]) => {
+                const isChecked = category === catName;
+                return (
+                  <label
+                    key={catName}
+                    className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => setCategory(isChecked ? 'All Products' : catName)}
+                        className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                      />
+                      <span>{catName}</span>
+                    </div>
+                    <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
+                      ({count})
+                    </span>
+                  </label>
+                );
+              })}
+            </FilterGroup>
+
+            {/* Material Filter Accordion */}
+            <FilterGroup title="Material" defaultOpen={true}>
+              {materialsList.map((item) => (
+                <label
+                  key={item.name}
+                  className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="checkbox"
+                      checked={selectedMaterials.includes(item.name)}
+                      onChange={() =>
+                        toggleFilter(item.name, selectedMaterials, setSelectedMaterials)
+                      }
+                      className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                    />
+                    <span>{item.name}</span>
+                  </div>
+                  <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
+                    ({item.count})
+                  </span>
+                </label>
+              ))}
+            </FilterGroup>
+
+            {/* Finish Filter Accordion with Color Dots */}
+            <FilterGroup title="Finish" defaultOpen={true}>
+              {finishesList.map((item) => (
+                <label
+                  key={item.name}
+                  className="flex cursor-pointer items-center gap-3 py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedFinishes.includes(item.name)}
+                    onChange={() =>
+                      toggleFilter(item.name, selectedFinishes, setSelectedFinishes)
+                    }
+                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                  />
+                  <span
+                    className="h-3.5 w-3.5 rounded-full border border-white/20 flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span>{item.name}</span>
+                </label>
+              ))}
+            </FilterGroup>
+
+            {/* Shape Accordion */}
+            <FilterGroup title="Shape" defaultOpen={false}>
+              {shapesList.map((shape) => (
+                <label
+                  key={shape}
+                  className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedShapes.includes(shape)}
+                    onChange={() => toggleFilter(shape, selectedShapes, setSelectedShapes)}
+                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                  />
+                  <span>{shape}</span>
+                </label>
+              ))}
+            </FilterGroup>
+
+            {/* Collection Accordion */}
+            <FilterGroup title="Collection" defaultOpen={false}>
+              {collectionsList.map((col) => (
+                <label
+                  key={col}
+                  className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCollections.includes(col)}
+                    onChange={() => toggleFilter(col, selectedCollections, setSelectedCollections)}
+                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                  />
+                  <span>{col}</span>
+                </label>
+              ))}
+            </FilterGroup>
+
+            <button
+              onClick={clearFilters}
+              className="mt-6 text-xs text-[#c8aa80] hover:text-white underline underline-offset-4 tracking-wider uppercase"
+            >
+              Reset filters
+            </button>
+          </aside>
+
+          {/* =================================================================== */}
+          {/* PRODUCT CARDS: 2 COLUMNS (Matching Reference Screenshot Exactly)     */}
+          {/* =================================================================== */}
+          <div>
+            {filteredProducts.length > 0 ? (
+              <div
+                className={
+                  viewMode === 'grid'
+                    ? 'grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7 lg:gap-8'
+                    : 'flex flex-col gap-6'
+                }
+              >
+                {filteredProducts.map((product) => {
+                  const isWishlisted = wishlist.includes(product.id);
+                  return (
+                    <article
+                      key={product.id}
+                      onClick={() => router.push(`/shop/${product.slug}`)}
+                      className="group cursor-pointer flex flex-col justify-between"
+                    >
+                      {/* Product Image Stage */}
+                      <div className="relative aspect-[1.38/1] overflow-hidden rounded-[2px] bg-[#1a1712] mb-3.5 shadow-lg border border-white/[0.04] group-hover:border-[#d5be9b]/30 transition-all duration-500">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                          loading="lazy"
+                        />
+
+                        {/* Top-Right Wishlist Heart Button */}
+                        <button
+                          aria-label="Add to wishlist"
+                          onClick={(e) => toggleWishlist(e, product.id)}
+                          className="absolute right-3.5 top-3.5 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/35 backdrop-blur-md text-white transition hover:bg-black/60 hover:scale-110"
+                        >
+                          <Heart
+                            size={16}
+                            strokeWidth={1.5}
+                            fill={isWishlisted ? '#e3c59d' : 'none'}
+                            color={isWishlisted ? '#e3c59d' : 'white'}
+                          />
+                        </button>
+
+                        {/* Slide-Up "Quick View" Bar on Hover */}
+                        <div className="absolute inset-x-0 bottom-0 translate-y-full bg-[#110f0b]/85 px-4 py-3 backdrop-blur-md transition-transform duration-300 group-hover:translate-y-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProduct(product);
+                            }}
+                            className="flex w-full items-center justify-between text-[11px] uppercase tracking-[0.2em] text-[#e8c99d] hover:text-white"
+                          >
+                            <span>Quick view</span>
+                            <ArrowUpRight size={15} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Info & Price Row */}
+                      <div className="flex items-start justify-between gap-3 pt-1">
+                        <div>
+                          <h3 className="font-serif text-xl sm:text-2xl text-[#f0e2ce] group-hover:text-[#e4c59d] transition-colors font-normal leading-snug">
+                            {product.name}
+                          </h3>
+                          <p className="mt-1 text-xs text-[#a99a83] font-light">
+                            {product.category}
+                          </p>
+                        </div>
+
+                        {/* Price & Circular Arrow Button */}
+                        <div className="flex items-center gap-3 pt-1">
+                          <p className="whitespace-nowrap text-sm font-medium text-[#e3c59d] tracking-wide">
+                            {product.priceFormatted || formatPrice(product.price)}
+                          </p>
+
+                          <div className="w-8 h-8 rounded-full border border-white/20 group-hover:border-[#d5be9b] flex items-center justify-center text-stone-400 group-hover:text-[#d5be9b] transition-colors">
+                            <ArrowUpRight size={14} />
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex min-h-[360px] flex-col items-center justify-center text-center border border-white/5 rounded bg-white/[0.01] p-8">
+                <p className="font-serif text-2xl text-[#f0e2ce]">No products found</p>
+                <p className="mt-3 text-xs text-[#a99b85] uppercase tracking-wider">
+                  Try adjusting or clearing your filters.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-6 border-b border-[#d5be9b] pb-1 text-xs uppercase tracking-widest text-[#d5be9b] hover:text-white"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            )}
+
+            {/* =================================================================== */}
+            {/* PAGINATION (Matching Reference Screenshot: < 1 2 3 4 ... 8 >)       */}
+            {/* =================================================================== */}
+            {filteredProducts.length > 0 && (
+              <div className="mt-16 sm:mt-20 flex items-center justify-center gap-2.5 sm:gap-3 text-xs">
+                <button
+                  aria-label="Previous page"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className="h-8 w-8 rounded-full border border-white/15 hover:border-[#d5be9b] text-stone-400 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+
+                <button
+                  onClick={() => setCurrentPage(1)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
+                    currentPage === 1
+                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
+                      : 'text-stone-300 hover:text-white'
+                  }`}
+                >
+                  1
+                </button>
+
+                <button
+                  onClick={() => setCurrentPage(2)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
+                    currentPage === 2
+                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  2
+                </button>
+
+                <button
+                  onClick={() => setCurrentPage(3)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
+                    currentPage === 3
+                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  3
+                </button>
+
+                <button
+                  onClick={() => setCurrentPage(4)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
+                    currentPage === 4
+                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  4
+                </button>
+
+                <span className="text-stone-500 px-1">...</span>
+
+                <button
+                  onClick={() => setCurrentPage(8)}
+                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
+                    currentPage === 8
+                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
+                      : 'text-stone-400 hover:text-white'
+                  }`}
+                >
+                  8
+                </button>
+
+                <button
+                  aria-label="Next page"
+                  onClick={() => setCurrentPage(Math.min(8, currentPage + 1))}
+                  className="h-8 w-8 rounded-full border border-white/15 hover:border-[#d5be9b] text-stone-400 hover:text-white flex items-center justify-center transition-colors"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      {/* ===================================================================== */}
+      {/* 5. PRODUCT QUICK VIEW MODAL (Matching Reference)                      */}
+      {/* ===================================================================== */}
+      {selectedProduct && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in"
+          onClick={() => setSelectedProduct(null)}
+        >
+          <div
+            className="relative grid w-full max-w-4xl overflow-hidden bg-[#1c1813] border border-white/10 rounded-[3px] md:grid-cols-2 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              aria-label="Close quick view"
+              onClick={() => setSelectedProduct(null)}
+              className="absolute right-4 top-4 z-20 rounded-full bg-black/50 p-2 text-stone-400 hover:text-white transition-colors"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="relative bg-[#14120e] min-h-[300px] flex items-center justify-center">
+              <img
+                src={selectedProduct.image}
+                alt={selectedProduct.name}
+                className="h-full w-full object-cover"
+              />
+            </div>
+
+            <div className="flex flex-col justify-between p-8 md:p-12">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.25em] text-[#c8a77a] font-medium">
+                  {selectedProduct.category} · {selectedProduct.material}
+                </p>
+                <h2 className="mt-3 font-serif text-3xl sm:text-4xl text-[#f0e2ce] font-normal leading-tight">
+                  {selectedProduct.name}
+                </h2>
+                <p className="mt-3 text-xs leading-relaxed text-[#bcae98] font-light">
+                  {selectedProduct.description}
+                </p>
+                <p className="mt-6 font-serif text-2xl text-[#e4c59d]">
+                  {selectedProduct.priceFormatted || formatPrice(selectedProduct.price)}
+                </p>
+              </div>
+
+              <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  onClick={() => {
+                    addToCart(selectedProduct);
+                    setSelectedProduct(null);
+                  }}
+                  className="w-full sm:w-auto flex-grow flex items-center justify-center gap-2.5 bg-[#d5be9b] hover:bg-[#e4c59d] px-6 py-3.5 text-xs uppercase tracking-[0.18em] text-[#110f0b] font-semibold transition-all rounded-[2px]"
+                >
+                  <ShoppingBag size={15} />
+                  <span>Add to Bag</span>
+                </button>
+
+                <Link
+                  href={`/shop/${selectedProduct.slug}`}
+                  onClick={() => setSelectedProduct(null)}
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 border border-white/20 hover:border-gold-300 px-5 py-3.5 text-xs uppercase tracking-[0.18em] text-[#eee0c9] hover:text-gold-300 transition-colors rounded-[2px]"
+                >
+                  <span>View Product</span>
+                  <ArrowUpRight size={15} />
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===================================================================== */}
+      {/* 6. FOOTER (Matching Reference)                                         */}
+      {/* ===================================================================== */}
+      <footer className="border-t border-white/10 px-6 py-14 md:px-16 lg:px-20 bg-[#0d0b08]">
+        <div className="w-full max-w-[1536px] mx-auto flex flex-col justify-between gap-10 md:flex-row items-start">
+          <div>
+            <h2 className="font-serif text-3xl tracking-[0.2em] text-[#f2eee6]">MOSAKA</h2>
+            <p className="mt-1 text-[9px] uppercase tracking-[0.55em] text-[#a99a83]">BATHWARE</p>
+            <p className="mt-5 max-w-xs text-xs leading-relaxed text-[#a99b85] font-light">
+              Where Elements Become Art. Sculptural forms and refined materials for exceptional spaces.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-12 sm:gap-16 text-xs">
+            <div className="space-y-3.5">
+              <p className="text-[#e2c39a] font-medium tracking-wider uppercase text-[11px]">Explore</p>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/shop">
+                Shop
+              </Link>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#collections">
+                Collections
+              </Link>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#about">
+                Our Story
+              </Link>
+            </div>
+            <div className="space-y-3.5">
+              <p className="text-[#e2c39a] font-medium tracking-wider uppercase text-[11px]">Connect</p>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#footer">
+                Contact
+              </Link>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/shop">
+                Projects
+              </Link>
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#about">
+                Atelier
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full max-w-[1536px] mx-auto mt-12 flex flex-col justify-between gap-3 border-t border-white/10 pt-6 text-[10.5px] text-[#857966] md:flex-row">
+          <p>© 2026 MOSAKA BATHWARE. All rights reserved.</p>
+          <p>Designed for exceptional spaces. Dubai • Worldwide.</p>
+        </div>
+      </footer>
+    </main>
   );
 }
 
-export default function ShopPage() {
+// Collapsible Filter Group Component
+function FilterGroup({ title, defaultOpen = true, children }) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <div className="min-h-screen bg-[#0a0a09] text-stone-200 selection:bg-gold-500 selection:text-stone-950 font-sans">
-      <CustomCursor />
-      <Navbar />
-      <CartDrawer />
-      <EnquiryModal />
-      <QuickViewModal />
-      <SearchModal />
-
-      <main className="pt-24 sm:pt-28 md:pt-32 pb-24 relative overflow-hidden">
-        {/* Subtle Ambient Golden Glows */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-[#c5a059]/10 via-[#c5a059]/5 to-transparent blur-[120px] pointer-events-none -z-10" />
-
-        <Suspense
-          fallback={
-            <div className="w-full max-w-[1536px] mx-auto px-6 py-24 text-center">
-              <span className="text-xs uppercase tracking-[0.25em] text-[#c5a059] animate-pulse">
-                Loading Mosaka Catalogue...
-              </span>
-            </div>
-          }
-        >
-          <ShopContent />
-        </Suspense>
-      </main>
-
-      <Footer />
+    <div className="border-t border-white/10 py-4">
+      <button
+        onClick={() => setOpen(!open)}
+        className="mb-2.5 flex w-full items-center justify-between text-left text-xs uppercase tracking-[0.18em] font-medium text-[#d5c6af] hover:text-white transition-colors"
+      >
+        <span>{title}</span>
+        <ChevronDown
+          size={14}
+          className={`text-[#a89472] transition-transform duration-300 ${open ? '' : '-rotate-90'}`}
+        />
+      </button>
+      {open && <div className="space-y-1">{children}</div>}
     </div>
   );
 }
