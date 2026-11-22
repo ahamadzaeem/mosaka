@@ -195,14 +195,13 @@ export default function ShopPage() {
         {/* Center Brand Identity */}
         <Link
           href="/"
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group cursor-pointer"
+          className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center group cursor-pointer py-1"
         >
-          <span className="font-serif text-2xl tracking-[0.22em] text-[#f2eee6] group-hover:text-[#e4c59d] transition-colors">
-            MOSAKA
-          </span>
-          <span className="text-[7.5px] uppercase tracking-[0.55em] text-[#a99a83] -mt-1 font-light">
-            BATHWARE
-          </span>
+          <img
+            src="/images/mosaka_logo_white.png"
+            alt="MOSAKA BATHWARE"
+            className="h-8 sm:h-10 md:h-[42px] w-auto max-w-[240px] object-contain group-hover:opacity-80 transition-all drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]"
+          />
         </Link>
 
         {/* Right Action Icons: Search, Wishlist, Cart */}

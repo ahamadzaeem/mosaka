@@ -151,7 +151,7 @@ export default function Navbar() {
         {/* ============================================================== */}
         {/* CENTER WHITE NOTCH: Bleeds directly from the top white border  */}
         {/* ============================================================== */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 z-20 w-[190px] sm:w-[220px] md:w-[230px] h-[58px] sm:h-[66px] md:h-[68px]">
+        <div className="absolute left-1/2 -translate-x-1/2 top-0 z-20 w-[220px] sm:w-[260px] md:w-[280px] h-[64px] sm:h-[72px] md:h-[76px]">
           <svg
             viewBox="0 0 220 56"
             preserveAspectRatio="none"
@@ -166,12 +166,12 @@ export default function Navbar() {
           {/* Official Brand Logo */}
           <Link
             href="/"
-            className="absolute inset-0 flex items-center justify-center pb-1.5 px-4 cursor-pointer group"
+            className="absolute inset-0 flex items-center justify-center pb-2 px-3 cursor-pointer group"
           >
             <img
               src="/images/mosaka_logo.png"
               alt="MOSAKA BATHWARE"
-              className="h-7 sm:h-8 md:h-[32px] w-auto max-w-[85%] object-contain group-hover:opacity-75 transition-opacity"
+              className="h-9 sm:h-11 md:h-12 w-auto max-w-[92%] object-contain group-hover:opacity-75 transition-opacity drop-shadow-sm"
             />
           </Link>
         </div>
