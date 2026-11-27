@@ -87,12 +87,14 @@ export default function Navbar() {
             Shop
           </Link>
 
-          <button
-            onClick={() => handleNavClick('about')}
-            className="text-stone-300 hover:text-white transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] py-1"
+          <Link
+            href="/about"
+            className={`transition-colors py-1 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] ${
+              pathname === '/about' ? 'text-gold-300 font-semibold' : 'text-stone-300 hover:text-white'
+            }`}
           >
             About
-          </button>
+          </Link>
 
           {/* Collections Dropdown */}
           <div

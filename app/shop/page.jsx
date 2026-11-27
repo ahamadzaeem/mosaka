@@ -187,7 +187,7 @@ export default function ShopPage() {
           <Link href="/shop" className="border-b-2 border-[#d5be9b] pb-1 text-[#e8c99d] font-semibold">
             Shop
           </Link>
-          <Link href="/#about" className="transition hover:text-white">
+          <Link href="/about" className="transition hover:text-white">
             About
           </Link>
         </nav>
