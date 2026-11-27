@@ -11,66 +11,21 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-const featuredItems = [
-  {
-    id: 'amezon',
-    slug: 'tectona-raw-live-edge-basin',
-    name: 'Amezon Basin',
-    price: 5950,
-    priceFormatted: 'AED 5,950',
-    category: 'Wooden Basins',
-    material: 'Carved Teak Root Live Edge',
-    dimensions: '620mm x 440mm x 150mm',
-    image: '/images/prod_amezon_clean.jpg',
-    hires: '/images/prod_amezon_exact.jpg',
-  },
-  {
-    id: 'nile',
-    slug: 'satin-brass-pill-vessel-basin',
-    name: 'Nile Basin',
-    price: 6450,
-    priceFormatted: 'AED 6,450',
-    category: 'Copper & Brass',
-    material: 'Hand-Hammered Solid Copper',
-    dimensions: '580mm x 410mm x 140mm',
-    image: '/images/prod_nile_clean.jpg',
-    hires: '/images/prod_nile_master.jpg',
-  },
-  {
-    id: 'emerald',
-    slug: 'emerald-jade-wave-basin',
-    name: 'Emerald Basin',
-    price: 7250,
-    priceFormatted: 'AED 7,250',
-    category: 'Statement Basins',
-    material: 'Verde Guatemala Marble Wave',
-    dimensions: '550mm x 480mm x 135mm',
-    image: '/images/prod_emerald_clean.jpg',
-    hires: '/images/prod_emerald_master.jpg',
-  },
-  {
-    id: 'tectona',
-    slug: 'fluted-scallop-teak-basin',
-    name: 'Tectona Basin',
-    price: 5850,
-    priceFormatted: 'AED 5,850',
-    category: 'Wooden Basins',
-    material: 'Burmese Solid Heartwood Teak',
-    dimensions: '420mm Dia x 140mm H',
-    image: '/images/prod_tectona_clean.jpg',
-    hires: '/images/prod_tectona_master.jpg',
-  },
-];
-
 export default function FeaturedPieces() {
   const sectionRef = useRef(null);
-  const { addToCart, setQuickViewProduct } = useCart();
+  const { addToCart, products, productsLoading } = useCart();
+
+  // Prioritize items tagged 'featured' in Shopify, otherwise first 4 live Shopify products
+  const featuredItems = React.useMemo(() => {
+    if (!products || products.length === 0) return [];
+    const flagged = products.filter((p) => p.isFeatured);
+    return (flagged.length > 0 ? flagged : products).slice(0, 4);
+  }, [products]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !sectionRef.current) return;
 
     const ctx = gsap.context(() => {
-      // 1. Header Reveal
       gsap.fromTo(
         '.feat-header-anim',
         { opacity: 0, y: 20 },
@@ -86,29 +41,29 @@ export default function FeaturedPieces() {
         }
       );
 
-      // 2. 4 Products Pedestal Elevation
-      gsap.fromTo(
-        '.product-col-item',
-        { opacity: 0, y: 65, scale: 0.95 },
-        {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          stagger: 0.12,
-          duration: 1.15,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: 'top 78%',
-          },
-        }
-      );
+      if (featuredItems.length > 0) {
+        gsap.fromTo(
+          '.product-col-item',
+          { opacity: 0, y: 65, scale: 0.95 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            stagger: 0.12,
+            duration: 1.15,
+            ease: 'power3.out',
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: 'top 78%',
+            },
+          }
+        );
+      }
     }, sectionRef);
 
     return () => ctx.revert();
-  }, []);
+  }, [featuredItems.length]);
 
-  // Interactive 3D Perspective Tilt on Mouse Hover
   const handleMouseMove = (e, cardEl) => {
     if (!cardEl) return;
     const rect = cardEl.getBoundingClientRect();
@@ -156,59 +111,80 @@ export default function FeaturedPieces() {
           </Link>
         </div>
 
-        {/* 4 Products Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
-          {featuredItems.map((product) => (
-            <div
-              key={product.id}
-              onMouseMove={(e) => handleMouseMove(e, e.currentTarget)}
-              onMouseLeave={(e) => handleMouseLeave(e.currentTarget)}
-              className="product-col-item group cursor-pointer flex flex-col justify-between"
-            >
-              {/* Product Basin Image Container with 3D Micro-Tilt */}
-              <div className="tilt-target relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5 transition-shadow duration-500">
-                <Link href={`/shop/${product.slug}`} className="block w-full h-full">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    onError={(e) => {
-                      if (product.hires) {
-                        e.currentTarget.src = product.hires;
-                      }
-                    }}
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                  />
-                </Link>
+        {/* Live Shopify Products Row */}
+        {productsLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="w-full aspect-[1.51/1] bg-white/5 rounded-[2px] mb-4" />
+                <div className="h-5 w-2/3 bg-white/5 rounded mb-2" />
+                <div className="h-3 w-1/3 bg-white/5 rounded" />
               </div>
-
-              {/* Product Info & Shopping Bag Outline Icon */}
-              <div className="flex items-end justify-between pt-1">
-                <div>
-                  <Link href={`/shop/${product.slug}`}>
-                    <h4 className="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
-                      {product.name}
-                    </h4>
+            ))}
+          </div>
+        ) : featuredItems.length === 0 ? (
+          <div className="py-12 border border-white/10 rounded-[2px] bg-white/[0.02] text-center">
+            <p className="font-serif text-xl text-stone-300 mb-2">
+              Connected to Shopify Store
+            </p>
+            <p className="text-xs text-stone-500 uppercase tracking-widest mb-5">
+              Publish products in Shopify Admin to display them here automatically.
+            </p>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-gold-300 hover:text-white transition-colors"
+            >
+              <span>Go to Shop</span>
+              <span>→</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7 lg:gap-8">
+            {featuredItems.map((product) => (
+              <div
+                key={product.id}
+                onMouseMove={(e) => handleMouseMove(e, e.currentTarget)}
+                onMouseLeave={(e) => handleMouseLeave(e.currentTarget)}
+                className="product-col-item group cursor-pointer flex flex-col justify-between"
+              >
+                <div className="tilt-target relative w-full aspect-[1.51/1] overflow-hidden bg-[#0d0c0b] rounded-[2px] mb-4 sm:mb-5 transition-shadow duration-500">
+                  <Link href={`/shop/${product.slug}`} className="block w-full h-full">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                    />
                   </Link>
-                  <p className="text-xs text-stone-400 font-light mt-1">
-                    {product.priceFormatted}
-                  </p>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addToCart(product);
-                  }}
-                  className="p-2 text-stone-400 hover:text-white transition-colors"
-                  title={`Add ${product.name} to bag`}
-                  aria-label="Add to bag"
-                >
-                  <ShoppingBag className="w-[18px] h-[18px] stroke-[1.4]" />
-                </button>
+                <div className="flex items-end justify-between pt-1">
+                  <div>
+                    <Link href={`/shop/${product.slug}`}>
+                      <h4 className="font-serif text-lg sm:text-xl text-white group-hover:text-gold-300 cursor-pointer transition-colors font-normal leading-snug">
+                        {product.name}
+                      </h4>
+                    </Link>
+                    <p className="text-xs text-stone-400 font-light mt-1">
+                      {product.priceFormatted}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product);
+                    }}
+                    className="p-2 text-stone-400 hover:text-white transition-colors"
+                    title={`Add ${product.name} to bag`}
+                    aria-label="Add to bag"
+                  >
+                    <ShoppingBag className="w-[18px] h-[18px] stroke-[1.4]" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

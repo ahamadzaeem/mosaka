@@ -16,9 +16,7 @@ import {
   ArrowUpRight,
   X,
   Menu,
-  Check,
 } from 'lucide-react';
-import { products, categories, materialsList, finishesList } from '../../data/products';
 import { useCart } from '../../context/CartContext';
 import CartDrawer from '../../components/CartDrawer';
 import EnquiryModal from '../../components/EnquiryModal';
@@ -33,13 +31,13 @@ const categoryIcons = {
       <rect x="3" y="14" width="7" height="7" rx="1" />
     </svg>
   ),
-  'Basins': (
+  Basins: (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 12h16c0 4.4-3.6 8-8 8s-8-3.6-8-8z" />
       <path d="M7 12V6a3 3 0 0 1 6 0v2" />
     </svg>
   ),
-  'Taps': (
+  Taps: (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M6 10V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v5" />
       <path d="M4 10h12v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4v-3z" />
@@ -47,7 +45,7 @@ const categoryIcons = {
       <path d="M7 21h6" />
     </svg>
   ),
-  'Accessories': (
+  Accessories: (
     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3" y="13" width="18" height="6" rx="2" />
       <path d="M7 13V8a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v5" />
@@ -55,27 +53,47 @@ const categoryIcons = {
   ),
 };
 
-const subcategoriesList = [
-  'Wooden Basins',
-  'Statement Basins',
-  'Pedestal Basins',
-  'Waterfall & Flow',
-  'Architectural Monolith',
-  'Sculptural & Classic',
-  'Bidet Systems',
-  'Classical Brass Suite',
-];
+const FINISH_COLOR_MAP = {
+  teak: '#69472e',
+  wood: '#69472e',
+  mahogany: '#5c2d1d',
+  gold: '#c69b42',
+  brass: '#dfb752',
+  antique: '#7a5a32',
+  emerald: '#164b35',
+  green: '#164b35',
+  bamboo: '#d8c2a0',
+  beige: '#d8c2a0',
+  chrome: '#e5e7eb',
+  silver: '#e5e7eb',
+  black: '#111111',
+  copper: '#a65d32',
+};
+
+function getFinishColor(name = '') {
+  const lower = name.toLowerCase();
+  for (const [key, hex] of Object.entries(FINISH_COLOR_MAP)) {
+    if (lower.includes(key)) return hex;
+  }
+  return '#c69b42';
+}
 
 export default function ShopPage() {
   const router = useRouter();
-  const { cartCount, setIsCartOpen, addToCart, products: liveProducts } = useCart();
+  const {
+    cartCount,
+    setIsCartOpen,
+    addToCart,
+    products: shopifyProducts,
+    productsLoading,
+  } = useCart();
 
   const [category, setCategory] = useState('All Products');
   const [selectedMaterials, setSelectedMaterials] = useState([]);
   const [selectedFinishes, setSelectedFinishes] = useState([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState([]);
   const [sort, setSort] = useState('Featured');
-  const [wishlist, setWishlist] = useState([1, 4, 14]);
+  const [wishlist, setWishlist] = useState([]);
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
@@ -84,45 +102,86 @@ export default function ShopPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter products strictly from the PDF catalogue (merged with live Shopify variants)
-  const filteredProducts = useMemo(() => {
-    let result = [...(liveProducts && liveProducts.length > 0 ? liveProducts : products)];
+  const allProducts = shopifyProducts || [];
 
-    // Category filter
+  // Dynamically derive categories, materials, finishes, and subcategories from live Shopify products
+  const categories = useMemo(() => {
+    const counts = new Map();
+    allProducts.forEach((p) => {
+      const cat = p.category || 'Other';
+      counts.set(cat, (counts.get(cat) || 0) + 1);
+    });
+    const list = [{ id: 'all', label: 'All Products', count: allProducts.length }];
+    counts.forEach((count, label) => {
+      list.push({ id: label, label, count });
+    });
+    return list;
+  }, [allProducts]);
+
+  const materialsList = useMemo(() => {
+    const counts = new Map();
+    allProducts.forEach((p) => {
+      if (p.material) counts.set(p.material, (counts.get(p.material) || 0) + 1);
+    });
+    return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
+  }, [allProducts]);
+
+  const finishesList = useMemo(() => {
+    const seen = new Set();
+    allProducts.forEach((p) => {
+      if (p.finish) seen.add(p.finish);
+    });
+    return Array.from(seen).map((name) => ({
+      name,
+      color: getFinishColor(name),
+    }));
+  }, [allProducts]);
+
+  const subcategoriesList = useMemo(() => {
+    const seen = new Set();
+    allProducts.forEach((p) => {
+      if (p.subcategory) seen.add(p.subcategory);
+    });
+    return Array.from(seen);
+  }, [allProducts]);
+
+  // Filter live Shopify products
+  const filteredProducts = useMemo(() => {
+    let result = [...allProducts];
+
     if (category !== 'All Products') {
       result = result.filter((p) => p.category === category);
     }
 
-    // Material filter
     if (selectedMaterials.length) {
       result = result.filter((p) =>
-        selectedMaterials.some((mat) => p.material.toLowerCase().includes(mat.toLowerCase()))
+        selectedMaterials.some((mat) =>
+          (p.material || '').toLowerCase().includes(mat.toLowerCase())
+        )
       );
     }
 
-    // Finish filter
     if (selectedFinishes.length) {
       result = result.filter((p) =>
-        selectedFinishes.some((fin) => p.finish.toLowerCase().includes(fin.toLowerCase()))
+        selectedFinishes.some((fin) =>
+          (p.finish || '').toLowerCase().includes(fin.toLowerCase())
+        )
       );
     }
 
-    // Subcategory filter
     if (selectedSubcategories.length) {
       result = result.filter((p) => selectedSubcategories.includes(p.subcategory));
     }
 
-    // Search filter
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((p) =>
-        `${p.name} ${p.material} ${p.category} ${p.subcategory} ${p.tagline || ''}`
+        `${p.name} ${p.material || ''} ${p.category || ''} ${p.subcategory || ''} ${p.tagline || ''}`
           .toLowerCase()
           .includes(q)
       );
     }
 
-    // Sorting
     if (sort === 'Price: Low to High') {
       result.sort((a, b) => a.price - b.price);
     } else if (sort === 'Price: High to Low') {
@@ -134,7 +193,7 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [liveProducts, category, selectedMaterials, selectedFinishes, selectedSubcategories, sort, search]);
+  }, [allProducts, category, selectedMaterials, selectedFinishes, selectedSubcategories, sort, search]);
 
   const toggleFilter = (value, selected, setter) => {
     setter(
@@ -167,7 +226,6 @@ export default function ShopPage() {
       {/* 1. TOP NAVIGATION HEADER                                              */}
       {/* ===================================================================== */}
       <header className="relative z-30 flex w-full items-center justify-between border-b border-white/10 px-6 py-5 md:px-12 bg-[#110f0b]/90 backdrop-blur-md">
-        {/* Mobile menu trigger */}
         <button
           onClick={() => setMobileMenu(!mobileMenu)}
           className="text-[#e9d8bd] md:hidden p-1"
@@ -176,7 +234,6 @@ export default function ShopPage() {
           <Menu size={22} />
         </button>
 
-        {/* Left Navigation Links */}
         <nav className="hidden items-center gap-9 text-[12px] tracking-[0.14em] uppercase font-medium md:flex">
           <Link href="/" className="transition hover:text-white">
             Home
@@ -192,7 +249,6 @@ export default function ShopPage() {
           </Link>
         </nav>
 
-        {/* Center Brand Identity */}
         <Link
           href="/"
           className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center group cursor-pointer py-1"
@@ -204,7 +260,6 @@ export default function ShopPage() {
           />
         </Link>
 
-        {/* Right Action Icons: Search, Wishlist, Cart */}
         <div className="flex items-center gap-5 sm:gap-6">
           <button
             aria-label="Search products"
@@ -261,7 +316,7 @@ export default function ShopPage() {
           <Link href="/shop" onClick={() => setMobileMenu(false)} className="text-[#e4c59d]">
             Shop All Catalog
           </Link>
-          <Link href="/#about" onClick={() => setMobileMenu(false)}>
+          <Link href="/about" onClick={() => setMobileMenu(false)}>
             About Mosaka
           </Link>
         </div>
@@ -276,7 +331,7 @@ export default function ShopPage() {
               autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by product name, timber species, or tapware finish..."
+              placeholder="Search Shopify catalog by name, material, or finish..."
               className="w-full bg-transparent text-sm outline-none placeholder:text-[#887d6d] text-white"
             />
             {search && (
@@ -298,7 +353,7 @@ export default function ShopPage() {
       )}
 
       {/* ===================================================================== */}
-      {/* 2. HERO SECTION: Cinematic Vanity Scene + Cormorant Garamond Heading */}
+      {/* 2. HERO SECTION                                                       */}
       {/* ===================================================================== */}
       <section className="relative flex min-h-[460px] sm:min-h-[500px] md:min-h-[520px] items-center overflow-hidden border-b border-white/10">
         <div
@@ -340,7 +395,7 @@ export default function ShopPage() {
       </section>
 
       {/* ===================================================================== */}
-      {/* 3. CATEGORY NAVIGATION PILLS BAR (Basins | Taps | Accessories)        */}
+      {/* 3. CATEGORY NAVIGATION PILLS BAR                                      */}
       {/* ===================================================================== */}
       <section className="px-5 py-8 md:px-12 md:py-10 border-b border-white/5 bg-[#14120e]/60">
         <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
@@ -357,7 +412,7 @@ export default function ShopPage() {
                 }`}
               >
                 <span className={isActive ? 'text-[#110f0b]' : 'text-[#a99a83]'}>
-                  {categoryIcons[item.label] || null}
+                  {categoryIcons[item.label] || categoryIcons['All Products']}
                 </span>
                 <span>
                   {item.label} ({item.count})
@@ -369,17 +424,16 @@ export default function ShopPage() {
       </section>
 
       {/* ===================================================================== */}
-      {/* 4. MAIN PRODUCT CATALOG AREA: Sidebar Filters + 2-Column Grid          */}
+      {/* 4. MAIN PRODUCT CATALOG AREA (100% Live Shopify)                      */}
       {/* ===================================================================== */}
       <section id="products" className="w-full max-w-[1536px] mx-auto px-6 sm:px-10 md:px-14 py-12 sm:py-16">
-        {/* Top Header Bar inside Products Section */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
           <div className="flex items-baseline gap-4">
             <h2 className="font-serif text-2xl sm:text-3xl text-[#f0e2ce] font-normal">
               {category === 'All Products' ? 'Discover' : category}
             </h2>
             <span className="text-xs text-[#a99b85] tracking-wider uppercase">
-              {filteredProducts.length} Catalogue Products
+              {productsLoading ? 'Syncing with Shopify...' : `${filteredProducts.length} Products`}
             </span>
           </div>
 
@@ -451,100 +505,104 @@ export default function ShopPage() {
               </button>
             </div>
 
-            {/* Category Filter Accordion */}
-            <FilterGroup title="Category" defaultOpen={true}>
-              {categories.slice(1).map((item) => {
-                const isChecked = category === item.label;
-                return (
+            {categories.length > 1 && (
+              <FilterGroup title="Category" defaultOpen={true}>
+                {categories.slice(1).map((item) => {
+                  const isChecked = category === item.label;
+                  return (
+                    <label
+                      key={item.id}
+                      className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => setCategory(isChecked ? 'All Products' : item.label)}
+                          className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                        />
+                        <span>{item.label}</span>
+                      </div>
+                      <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
+                        ({item.count})
+                      </span>
+                    </label>
+                  );
+                })}
+              </FilterGroup>
+            )}
+
+            {materialsList.length > 0 && (
+              <FilterGroup title="Material" defaultOpen={true}>
+                {materialsList.map((item) => (
                   <label
-                    key={item.id}
+                    key={item.name}
                     className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
                   >
                     <div className="flex items-center gap-2.5">
                       <input
                         type="checkbox"
-                        checked={isChecked}
-                        onChange={() => setCategory(isChecked ? 'All Products' : item.label)}
+                        checked={selectedMaterials.includes(item.name)}
+                        onChange={() =>
+                          toggleFilter(item.name, selectedMaterials, setSelectedMaterials)
+                        }
                         className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
                       />
-                      <span>{item.label}</span>
+                      <span>{item.name}</span>
                     </div>
                     <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
                       ({item.count})
                     </span>
                   </label>
-                );
-              })}
-            </FilterGroup>
+                ))}
+              </FilterGroup>
+            )}
 
-            {/* Material Filter Accordion */}
-            <FilterGroup title="Material" defaultOpen={true}>
-              {materialsList.map((item) => (
-                <label
-                  key={item.name}
-                  className="flex cursor-pointer items-center justify-between py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors group"
-                >
-                  <div className="flex items-center gap-2.5">
+            {finishesList.length > 0 && (
+              <FilterGroup title="Finish" defaultOpen={true}>
+                {finishesList.map((item) => (
+                  <label
+                    key={item.name}
+                    className="flex cursor-pointer items-center gap-3 py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors"
+                  >
                     <input
                       type="checkbox"
-                      checked={selectedMaterials.includes(item.name)}
+                      checked={selectedFinishes.includes(item.name)}
                       onChange={() =>
-                        toggleFilter(item.name, selectedMaterials, setSelectedMaterials)
+                        toggleFilter(item.name, selectedFinishes, setSelectedFinishes)
                       }
                       className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
                     />
+                    <span
+                      className="h-3.5 w-3.5 rounded-full border border-white/20 flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    />
                     <span>{item.name}</span>
-                  </div>
-                  <span className="text-[10px] text-[#786b59] group-hover:text-stone-400">
-                    ({item.count})
-                  </span>
-                </label>
-              ))}
-            </FilterGroup>
+                  </label>
+                ))}
+              </FilterGroup>
+            )}
 
-            {/* Finish Filter Accordion with Color Dots */}
-            <FilterGroup title="Finish" defaultOpen={true}>
-              {finishesList.map((item) => (
-                <label
-                  key={item.name}
-                  className="flex cursor-pointer items-center gap-3 py-1.5 text-xs text-[#c9bda9] hover:text-white transition-colors"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedFinishes.includes(item.name)}
-                    onChange={() =>
-                      toggleFilter(item.name, selectedFinishes, setSelectedFinishes)
-                    }
-                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
-                  />
-                  <span
-                    className="h-3.5 w-3.5 rounded-full border border-white/20 flex-shrink-0"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span>{item.name}</span>
-                </label>
-              ))}
-            </FilterGroup>
-
-            {/* Subcategories Accordion */}
-            <FilterGroup title="Subcategory" defaultOpen={false}>
-              {subcategoriesList.map((subcat) => (
-                <label
-                  key={subcat}
-                  className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedSubcategories.includes(subcat)}
-                    onChange={() =>
-                      toggleFilter(subcat, selectedSubcategories, setSelectedSubcategories)
-                    }
-                    className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
-                  />
-                  <span>{subcat}</span>
-                </label>
-              ))}
-            </FilterGroup>
+            {subcategoriesList.length > 0 && (
+              <FilterGroup title="Subcategory" defaultOpen={false}>
+                {subcategoriesList.map((subcat) => (
+                  <label
+                    key={subcat}
+                    className="flex cursor-pointer items-center gap-2.5 py-1.5 text-xs text-[#c9bda9] hover:text-white"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedSubcategories.includes(subcat)}
+                      onChange={() =>
+                        toggleFilter(subcat, selectedSubcategories, setSelectedSubcategories)
+                      }
+                      className="accent-[#d5be9b] w-3.5 h-3.5 rounded"
+                    />
+                    <span>{subcat}</span>
+                  </label>
+                ))}
+              </FilterGroup>
+            )}
 
             <button
               onClick={clearFilters}
@@ -554,11 +612,19 @@ export default function ShopPage() {
             </button>
           </aside>
 
-          {/* =================================================================== */}
-          {/* PRODUCT CARDS: 2 COLUMNS (Matching Reference Screenshot Exactly)     */}
-          {/* =================================================================== */}
+          {/* PRODUCT CARDS */}
           <div>
-            {filteredProducts.length > 0 ? (
+            {productsLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-7 lg:gap-8">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="aspect-[1.38/1] bg-white/5 rounded-[2px] mb-3.5" />
+                    <div className="h-6 w-2/3 bg-white/5 rounded mb-2" />
+                    <div className="h-3 w-1/3 bg-white/5 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div
                 className={
                   viewMode === 'grid'
@@ -574,7 +640,6 @@ export default function ShopPage() {
                       onClick={() => router.push(`/shop/${product.slug}`)}
                       className="group cursor-pointer flex flex-col justify-between"
                     >
-                      {/* Product Image Stage */}
                       <div className="relative aspect-[1.38/1] overflow-hidden rounded-[2px] bg-[#1a1712] mb-3.5 shadow-lg border border-white/[0.04] group-hover:border-[#d5be9b]/30 transition-all duration-500">
                         <img
                           src={product.image}
@@ -583,14 +648,6 @@ export default function ShopPage() {
                           loading="lazy"
                         />
 
-                        {/* Catalogue Page Reference Badge */}
-                        <div className="absolute left-3 top-3 z-10">
-                          <span className="px-2 py-0.5 bg-black/60 backdrop-blur-sm border border-white/10 text-[9px] uppercase tracking-wider text-[#d5be9b] rounded-[2px]">
-                            {product.pdfPage}
-                          </span>
-                        </div>
-
-                        {/* Top-Right Wishlist Heart Button */}
                         <button
                           aria-label="Add to wishlist"
                           onClick={(e) => toggleWishlist(e, product.id)}
@@ -604,7 +661,6 @@ export default function ShopPage() {
                           />
                         </button>
 
-                        {/* Slide-Up "Quick View" Bar on Hover */}
                         <div className="absolute inset-x-0 bottom-0 translate-y-full bg-[#110f0b]/85 px-4 py-3 backdrop-blur-md transition-transform duration-300 group-hover:translate-y-0">
                           <button
                             onClick={(e) => {
@@ -619,18 +675,17 @@ export default function ShopPage() {
                         </div>
                       </div>
 
-                      {/* Info & Price Row */}
                       <div className="flex items-start justify-between gap-3 pt-1">
                         <div>
                           <h3 className="font-serif text-xl sm:text-2xl text-[#f0e2ce] group-hover:text-[#e4c59d] transition-colors font-normal leading-snug">
                             {product.name}
                           </h3>
                           <p className="mt-1 text-xs text-[#a99a83] font-light">
-                            {product.subcategory} · {product.material}
+                            {product.subcategory || product.category}
+                            {product.material ? ` · ${product.material}` : ''}
                           </p>
                         </div>
 
-                        {/* Price & Circular Arrow Button */}
                         <div className="flex items-center gap-3 pt-1">
                           <p className="whitespace-nowrap text-sm font-medium text-[#e3c59d] tracking-wide">
                             {product.priceFormatted}
@@ -644,6 +699,24 @@ export default function ShopPage() {
                     </article>
                   );
                 })}
+              </div>
+            ) : allProducts.length === 0 ? (
+              <div className="flex min-h-[360px] flex-col items-center justify-center text-center border border-white/10 rounded bg-white/[0.02] p-8">
+                <p className="font-serif text-2xl text-[#f0e2ce]">
+                  No Products Published in Shopify Yet
+                </p>
+                <p className="mt-3 max-w-md text-xs text-[#a99b85] leading-relaxed">
+                  Your storefront is connected to <strong className="text-[#e4c59d]">gx9me0-fg.myshopify.com</strong>. Add or import products in Shopify Admin and publish them to your Headless sales channel to display them here automatically.
+                </p>
+                <a
+                  href="https://admin.shopify.com/store/gx9me0-fg/products"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-6 inline-flex items-center gap-2 border-b border-[#d5be9b] pb-1 text-xs uppercase tracking-widest text-[#d5be9b] hover:text-white"
+                >
+                  <span>Open Shopify Products Admin</span>
+                  <ArrowUpRight size={14} />
+                </a>
               </div>
             ) : (
               <div className="flex min-h-[360px] flex-col items-center justify-center text-center border border-white/5 rounded bg-white/[0.01] p-8">
@@ -683,30 +756,8 @@ export default function ShopPage() {
                 </button>
 
                 <button
-                  onClick={() => setCurrentPage(2)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
-                    currentPage === 2
-                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  2
-                </button>
-
-                <button
-                  onClick={() => setCurrentPage(3)}
-                  className={`h-8 w-8 rounded-full flex items-center justify-center font-medium transition-colors ${
-                    currentPage === 3
-                      ? 'bg-[#d5be9b] text-[#110f0b] font-bold'
-                      : 'text-stone-400 hover:text-white'
-                  }`}
-                >
-                  3
-                </button>
-
-                <button
                   aria-label="Next page"
-                  onClick={() => setCurrentPage(Math.min(3, currentPage + 1))}
+                  onClick={() => setCurrentPage(1)}
                   className="h-8 w-8 rounded-full border border-white/15 hover:border-[#d5be9b] text-stone-400 hover:text-white flex items-center justify-center transition-colors"
                 >
                   <ChevronRight size={14} />
@@ -743,9 +794,6 @@ export default function ShopPage() {
                 alt={selectedProduct.name}
                 className="h-full w-full object-cover"
               />
-              <span className="absolute bottom-3 left-3 px-2 py-0.5 bg-black/70 border border-white/10 text-[9px] uppercase tracking-wider text-[#d5be9b]">
-                {selectedProduct.pdfPage}
-              </span>
             </div>
 
             <div className="flex flex-col justify-between p-8 md:p-12">
@@ -812,7 +860,7 @@ export default function ShopPage() {
               <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#collections">
                 Collections
               </Link>
-              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#about">
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/about">
                 Our Story
               </Link>
             </div>
@@ -824,7 +872,7 @@ export default function ShopPage() {
               <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/shop">
                 Projects
               </Link>
-              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/#about">
+              <Link className="block text-[#b6a993] hover:text-white transition-colors" href="/about">
                 Atelier
               </Link>
             </div>
@@ -840,7 +888,6 @@ export default function ShopPage() {
   );
 }
 
-// Collapsible Filter Group Component
 function FilterGroup({ title, defaultOpen = true, children }) {
   const [open, setOpen] = useState(defaultOpen);
 

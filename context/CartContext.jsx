@@ -1,10 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { products as catalogueProducts } from '../data/products';
 import {
   getShopifyProducts,
-  mergeShopifyWithLocal,
   createShopifyCart,
   addToShopifyCart,
   updateShopifyCartLines,
@@ -19,7 +17,8 @@ export const CartProvider = ({ children }) => {
   const [shopifyCartId, setShopifyCartId] = useState(null);
   const [shopifyCheckoutUrl, setShopifyCheckoutUrl] = useState(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [liveProducts, setLiveProducts] = useState(catalogueProducts);
+  const [liveProducts, setLiveProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [shopifyConnected, setShopifyConnected] = useState(false);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -42,7 +41,7 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  // Hydrate cart and sync live Shopify products
+  // Hydrate cart and fetch live Shopify products
   useEffect(() => {
     try {
       const saved = localStorage.getItem('mosaka_cart');
@@ -63,26 +62,18 @@ export const CartProvider = ({ children }) => {
       }
     } catch {}
 
-    // Fetch live Shopify products and merge with local catalogue
-    getShopifyProducts()
+    setProductsLoading(true);
+    getShopifyProducts(50)
       .then((shopifyList) => {
         setShopifyConnected(true);
-        if (shopifyList && shopifyList.length > 0) {
-          const shopifyByHandle = new Map(shopifyList.map((p) => [p.slug, p]));
-          const merged = catalogueProducts.map((localItem) => {
-            const match = shopifyByHandle.get(localItem.slug);
-            if (match) {
-              shopifyByHandle.delete(localItem.slug);
-              return mergeShopifyWithLocal(match, localItem);
-            }
-            return localItem;
-          });
-          const extras = Array.from(shopifyByHandle.values());
-          setLiveProducts([...merged, ...extras]);
-        }
+        setLiveProducts(Array.isArray(shopifyList) ? shopifyList : []);
       })
       .catch(() => {
         setShopifyConnected(false);
+        setLiveProducts([]);
+      })
+      .finally(() => {
+        setProductsLoading(false);
       });
   }, []);
 
@@ -106,13 +97,20 @@ export const CartProvider = ({ children }) => {
         : null;
 
     setCart((prev) => {
-      const existing = prev.find(
-        (item) => (item.cartKey || item.id) === itemKey
-      );
+      const existing = prev.find((item) => (item.cartKey || item.id) === itemKey);
       if (existing) {
         return prev.map((item) =>
           (item.cartKey || item.id) === itemKey
-            ? { ...item, ...syncedProduct, cartKey: itemKey, shopifyVariantId: variantId, price: unitPrice, image: itemImage, variantTitle, quantity: item.quantity + quantity }
+            ? {
+                ...item,
+                ...syncedProduct,
+                cartKey: itemKey,
+                shopifyVariantId: variantId,
+                price: unitPrice,
+                image: itemImage,
+                variantTitle,
+                quantity: item.quantity + quantity,
+              }
             : item
         );
       }
@@ -135,7 +133,6 @@ export const CartProvider = ({ children }) => {
     );
     setTimeout(() => setNotification(null), 3200);
 
-    // Sync with Shopify Cart API if this product has a Shopify variant ID
     if (variantId) {
       try {
         const lines = [{ merchandiseId: variantId, quantity }];
@@ -158,7 +155,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (idOrKey) => {
-    const target = cart.find((item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey);
+    const target = cart.find(
+      (item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey
+    );
     setCart((prev) =>
       prev.filter((item) => (item.cartKey || item.id) !== idOrKey && item.id !== idOrKey)
     );
@@ -176,7 +175,9 @@ export const CartProvider = ({ children }) => {
   };
 
   const updateQuantity = async (idOrKey, delta) => {
-    const target = cart.find((item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey);
+    const target = cart.find(
+      (item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey
+    );
     const nextQty = target ? target.quantity + delta : 0;
 
     setCart((prev) =>
@@ -304,6 +305,7 @@ export const CartProvider = ({ children }) => {
         notification,
         setNotification,
         products: liveProducts,
+        productsLoading,
       }}
     >
       {children}
