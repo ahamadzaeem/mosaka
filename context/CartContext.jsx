@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { products as catalogueProducts } from '../data/products';
 import {
   getShopifyProducts,
+  mergeShopifyWithLocal,
   createShopifyCart,
   addToShopifyCart,
   updateShopifyCartLines,
@@ -28,6 +29,19 @@ export const CartProvider = ({ children }) => {
   const [quickViewProduct, setQuickViewProduct] = useState(null);
   const [notification, setNotification] = useState(null);
 
+  const syncLineIdsFromShopifyCart = (shopifyCart) => {
+    if (!shopifyCart?.lines?.edges) return;
+    const lineByVariant = new Map(
+      shopifyCart.lines.edges.map((e) => [e.node.merchandise?.id, e.node.id])
+    );
+    setCart((prev) =>
+      prev.map((item) => {
+        const lineId = item.shopifyVariantId ? lineByVariant.get(item.shopifyVariantId) : null;
+        return lineId ? { ...item, shopifyLineId: lineId } : item;
+      })
+    );
+  };
+
   // Hydrate cart and sync live Shopify products
   useEffect(() => {
     try {
@@ -40,6 +54,7 @@ export const CartProvider = ({ children }) => {
         getShopifyCart(savedCartId).then((sc) => {
           if (sc?.checkoutUrl) {
             setShopifyCheckoutUrl(sc.checkoutUrl);
+            syncLineIdsFromShopifyCart(sc);
           } else {
             localStorage.removeItem('mosaka_shopify_cart_id');
             setShopifyCartId(null);
@@ -53,24 +68,15 @@ export const CartProvider = ({ children }) => {
       .then((shopifyList) => {
         setShopifyConnected(true);
         if (shopifyList && shopifyList.length > 0) {
-          // Merge Shopify variant IDs & live pricing into matching catalogue items, plus any new Shopify-only items
           const shopifyByHandle = new Map(shopifyList.map((p) => [p.slug, p]));
           const merged = catalogueProducts.map((localItem) => {
             const match = shopifyByHandle.get(localItem.slug);
             if (match) {
               shopifyByHandle.delete(localItem.slug);
-              return {
-                ...localItem,
-                shopifyId: match.shopifyId,
-                shopifyVariantId: match.shopifyVariantId,
-                price: match.price > 0 ? match.price : localItem.price,
-                priceFormatted: match.price > 0 ? match.priceFormatted : localItem.priceFormatted,
-                isShopifyLive: true,
-              };
+              return mergeShopifyWithLocal(match, localItem);
             }
             return localItem;
           });
-          // Append any extra products added directly in Shopify
           const extras = Array.from(shopifyByHandle.values());
           setLiveProducts([...merged, ...extras]);
         }
@@ -86,30 +92,53 @@ export const CartProvider = ({ children }) => {
     } catch {}
   }, [cart]);
 
-  const addToCart = async (product, quantity = 1) => {
-    // Find latest product metadata (with shopifyVariantId if synced)
+  const addToCart = async (product, quantity = 1, selectedVariant = null) => {
     const syncedProduct =
       liveProducts.find((p) => p.slug === product.slug || p.id === product.id) || product;
 
+    const variantId = selectedVariant?.id || syncedProduct.shopifyVariantId || null;
+    const itemKey = variantId ? `${syncedProduct.id}::${variantId}` : syncedProduct.id;
+    const unitPrice = selectedVariant?.priceAmount ?? syncedProduct.price;
+    const itemImage = selectedVariant?.image?.url || syncedProduct.image;
+    const variantTitle =
+      selectedVariant?.title && selectedVariant.title !== 'Default Title'
+        ? selectedVariant.title
+        : null;
+
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === syncedProduct.id);
+      const existing = prev.find(
+        (item) => (item.cartKey || item.id) === itemKey
+      );
       if (existing) {
         return prev.map((item) =>
-          item.id === syncedProduct.id
-            ? { ...item, ...syncedProduct, quantity: item.quantity + quantity }
+          (item.cartKey || item.id) === itemKey
+            ? { ...item, ...syncedProduct, cartKey: itemKey, shopifyVariantId: variantId, price: unitPrice, image: itemImage, variantTitle, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { ...syncedProduct, quantity }];
+      return [
+        ...prev,
+        {
+          ...syncedProduct,
+          cartKey: itemKey,
+          shopifyVariantId: variantId,
+          price: unitPrice,
+          image: itemImage,
+          variantTitle,
+          quantity,
+        },
+      ];
     });
 
-    setNotification(`Added "${syncedProduct.name}" to bag`);
+    setNotification(
+      `Added "${syncedProduct.name}${variantTitle ? ` (${variantTitle})` : ''}" to bag`
+    );
     setTimeout(() => setNotification(null), 3200);
 
     // Sync with Shopify Cart API if this product has a Shopify variant ID
-    if (syncedProduct.shopifyVariantId) {
+    if (variantId) {
       try {
-        const lines = [{ merchandiseId: syncedProduct.shopifyVariantId, quantity }];
+        const lines = [{ merchandiseId: variantId, quantity }];
         let updatedCart;
         if (shopifyCartId) {
           updatedCart = await addToShopifyCart(shopifyCartId, lines);
@@ -120,6 +149,7 @@ export const CartProvider = ({ children }) => {
           setShopifyCartId(updatedCart.id);
           setShopifyCheckoutUrl(updatedCart.checkoutUrl);
           localStorage.setItem('mosaka_shopify_cart_id', updatedCart.id);
+          syncLineIdsFromShopifyCart(updatedCart);
         }
       } catch (err) {
         console.error('Shopify cart sync failed:', err);
@@ -127,15 +157,32 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  const removeFromCart = async (id) => {
-    setCart((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = async (idOrKey) => {
+    const target = cart.find((item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey);
+    setCart((prev) =>
+      prev.filter((item) => (item.cartKey || item.id) !== idOrKey && item.id !== idOrKey)
+    );
+
+    if (shopifyCartId && target?.shopifyLineId) {
+      try {
+        const updatedCart = await removeFromShopifyCart(shopifyCartId, [target.shopifyLineId]);
+        if (updatedCart?.checkoutUrl) {
+          setShopifyCheckoutUrl(updatedCart.checkoutUrl);
+        }
+      } catch (err) {
+        console.error('Shopify cart remove failed:', err);
+      }
+    }
   };
 
-  const updateQuantity = (id, delta) => {
+  const updateQuantity = async (idOrKey, delta) => {
+    const target = cart.find((item) => (item.cartKey || item.id) === idOrKey || item.id === idOrKey);
+    const nextQty = target ? target.quantity + delta : 0;
+
     setCart((prev) =>
       prev
         .map((item) => {
-          if (item.id === id) {
+          if ((item.cartKey || item.id) === idOrKey || item.id === idOrKey) {
             const newQty = item.quantity + delta;
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
@@ -143,12 +190,28 @@ export const CartProvider = ({ children }) => {
         })
         .filter(Boolean)
     );
+
+    if (shopifyCartId && target?.shopifyLineId) {
+      try {
+        if (nextQty <= 0) {
+          await removeFromShopifyCart(shopifyCartId, [target.shopifyLineId]);
+        } else {
+          const updatedCart = await updateShopifyCartLines(shopifyCartId, [
+            { id: target.shopifyLineId, quantity: nextQty },
+          ]);
+          if (updatedCart?.checkoutUrl) {
+            setShopifyCheckoutUrl(updatedCart.checkoutUrl);
+          }
+        }
+      } catch (err) {
+        console.error('Shopify cart update failed:', err);
+      }
+    }
   };
 
   const proceedToCheckout = async () => {
     setIsCheckingOut(true);
     try {
-      // Collect any items with live Shopify variant IDs
       const shopifyLines = cart
         .filter((item) => item.shopifyVariantId)
         .map((item) => ({
@@ -181,6 +244,31 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  const buyNow = async (product, quantity = 1, selectedVariant = null) => {
+    const variantId = selectedVariant?.id || product.shopifyVariantId;
+    if (!variantId) {
+      openEnquiry(`Direct Order Inquiry: ${product.name} (${quantity} units)`);
+      return false;
+    }
+
+    setIsCheckingOut(true);
+    try {
+      const freshCart = await createShopifyCart([{ merchandiseId: variantId, quantity }]);
+      if (freshCart?.checkoutUrl) {
+        window.location.href = freshCart.checkoutUrl;
+        return true;
+      }
+      openEnquiry(`Direct Order Inquiry: ${product.name} (${quantity} units)`);
+      return false;
+    } catch (err) {
+      console.error('Buy Now failed:', err);
+      openEnquiry(`Direct Order Inquiry: ${product.name} (${quantity} units)`);
+      return false;
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   const cartTotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -199,6 +287,7 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         updateQuantity,
         proceedToCheckout,
+        buyNow,
         isCheckingOut,
         shopifyCheckoutUrl,
         shopifyConnected,

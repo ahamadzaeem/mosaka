@@ -54,8 +54,10 @@ export default function CartDrawer() {
           {cart.length === 0 ? (
             <p className="text-center text-stone-500 text-xs py-16">Your shopping bag is empty.</p>
           ) : (
-            cart.map((item) => (
-              <div key={item.id} className="py-4 flex items-center justify-between gap-4">
+            cart.map((item) => {
+              const itemKey = item.cartKey || item.id;
+              return (
+              <div key={itemKey} className="py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Link
                     href={item.slug ? `/shop/${item.slug}` : '/shop'}
@@ -76,19 +78,24 @@ export default function CartDrawer() {
                         {item.name}
                       </h5>
                     </Link>
+                    {item.variantTitle && (
+                      <p className="text-[10px] uppercase tracking-wider text-gold-400/80">
+                        {item.variantTitle}
+                      </p>
+                    )}
                     <p className="text-[11px] text-stone-400">
                       AED {Number(item.price || 0).toLocaleString()}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => updateQuantity(itemKey, -1)}
                         className="text-stone-400 hover:text-white text-xs px-1.5 border border-white/10 rounded"
                       >
                         -
                       </button>
                       <span className="text-xs text-stone-300">{item.quantity}</span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => updateQuantity(itemKey, 1)}
                         className="text-stone-400 hover:text-white text-xs px-1.5 border border-white/10 rounded"
                       >
                         +
@@ -97,13 +104,14 @@ export default function CartDrawer() {
                   </div>
                 </div>
                 <button
-                  onClick={() => removeFromCart(item.id)}
+                  onClick={() => removeFromCart(itemKey)}
                   className="text-stone-500 hover:text-red-400 text-xs"
                 >
                   Remove
                 </button>
               </div>
-            ))
+              );
+            })
           )}
         </div>
 

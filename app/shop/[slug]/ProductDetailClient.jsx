@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '../../../context/CartContext';
@@ -13,6 +13,8 @@ import {
   Download,
   Share2,
   Eye,
+  Zap,
+  Loader2,
 } from 'lucide-react';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
@@ -29,7 +31,45 @@ export default function ProductDetailClient({ product, pairedProducts }) {
   const [quantity, setQuantity] = useState(1);
   const [copied, setCopied] = useState(false);
 
-  const { addToCart, openEnquiry, setQuickViewProduct } = useCart();
+  const { addToCart, buyNow, isCheckingOut, openEnquiry, setQuickViewProduct } = useCart();
+
+  // Initialize selected options from first variant if product has Shopify options
+  const initialOptions = useMemo(() => {
+    const defaults = {};
+    if (product?.variants?.[0]?.selectedOptions) {
+      product.variants[0].selectedOptions.forEach((opt) => {
+        defaults[opt.name] = opt.value;
+      });
+    }
+    return defaults;
+  }, [product]);
+
+  const [selectedOptions, setSelectedOptions] = useState(initialOptions);
+
+  // Resolve matching Shopify variant
+  const selectedVariant = useMemo(() => {
+    if (!product?.variants || product.variants.length === 0) return null;
+    if (product.variants.length === 1) return product.variants[0];
+
+    const match = product.variants.find((variant) =>
+      variant.selectedOptions?.every((opt) => selectedOptions[opt.name] === opt.value)
+    );
+    return match || product.variants[0];
+  }, [product, selectedOptions]);
+
+  const handleOptionSelect = (optionName, value) => {
+    const next = { ...selectedOptions, [optionName]: value };
+    setSelectedOptions(next);
+
+    // If the matched variant has a specific image in the gallery, switch to it
+    const matched = product?.variants?.find((v) =>
+      v.selectedOptions?.every((opt) => next[opt.name] === opt.value)
+    );
+    if (matched?.image?.url && product?.gallery) {
+      const idx = product.gallery.indexOf(matched.image.url);
+      if (idx !== -1) setActiveImageIndex(idx);
+    }
+  };
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {
@@ -39,7 +79,16 @@ export default function ProductDetailClient({ product, pairedProducts }) {
     }
   };
 
-  const images = product?.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
+  const images =
+    product?.gallery && product.gallery.length > 0 ? product.gallery : [product.image];
+
+  const displayPrice = selectedVariant?.priceFormatted || product.priceFormatted;
+  const compareAtPrice = selectedVariant?.compareAtFormatted || product.compareAtFormatted;
+  const isAvailable =
+    selectedVariant !== null
+      ? selectedVariant.availableForSale !== false
+      : product.availableForSale !== false;
+  const activeSku = selectedVariant?.sku || product.sku;
 
   return (
     <div className="min-h-screen bg-[#0a0a09] text-stone-200 selection:bg-gold-500 selection:text-stone-950 font-sans">
@@ -66,7 +115,7 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                 Catalogue
               </Link>
               <span>/</span>
-              <span className="text-stone-500">{product.subcategory}</span>
+              <span className="text-stone-500">{product.subcategory || product.category}</span>
               <span>/</span>
               <span className="text-gold-300 truncate max-w-[200px]">{product.name}</span>
             </nav>
@@ -106,12 +155,12 @@ export default function ProductDetailClient({ product, pairedProducts }) {
 
               {/* Thumbnails Row */}
               {images.length > 1 && (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 overflow-x-auto pb-1">
                   {images.map((imgUrl, idx) => (
                     <button
                       key={idx}
                       onClick={() => setActiveImageIndex(idx)}
-                      className={`relative w-20 sm:w-24 aspect-[1.3/1] rounded-[2px] overflow-hidden border transition-all duration-300 ${
+                      className={`relative w-20 sm:w-24 flex-shrink-0 aspect-[1.3/1] rounded-[2px] overflow-hidden border transition-all duration-300 ${
                         activeImageIndex === idx
                           ? 'border-[#c5a059] shadow-[0_0_15px_rgba(197,160,89,0.3)]'
                           : 'border-white/10 opacity-60 hover:opacity-100 hover:border-white/30'
@@ -160,12 +209,16 @@ export default function ProductDetailClient({ product, pairedProducts }) {
               <div>
                 <div className="flex items-center justify-between gap-2 mb-3">
                   <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#c5a059]">
-                    {product.subcategory}
+                    {product.subcategory || product.category}
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        isAvailable ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                      }`}
+                    />
                     <span className="text-[10px] uppercase tracking-wider text-stone-400">
-                      Available on Order
+                      {isAvailable ? 'In Stock — Available' : 'Currently Sold Out'}
                     </span>
                   </div>
                 </div>
@@ -174,18 +227,57 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                   {product.name}
                 </h1>
 
-                <p className="text-stone-300 text-sm font-light leading-relaxed mb-6 italic">
-                  "{product.tagline}"
-                </p>
+                {product.tagline && (
+                  <p className="text-stone-300 text-sm font-light leading-relaxed mb-6 italic">
+                    "{product.tagline}"
+                  </p>
+                )}
 
                 <div className="flex items-baseline gap-3 pb-6 mb-6 border-b border-white/10">
                   <span className="text-2xl sm:text-3xl font-normal text-[#e6ca85] tracking-wide">
-                    {product.priceFormatted}
+                    {displayPrice}
                   </span>
+                  {compareAtPrice && (
+                    <span className="text-sm text-stone-500 line-through">{compareAtPrice}</span>
+                  )}
                   <span className="text-xs text-stone-500 uppercase tracking-wider">
                     • Net Atelier Price
                   </span>
                 </div>
+
+                {/* Live Shopify Variants / Options Selector */}
+                {product.options && product.options.length > 0 && (
+                  <div className="space-y-4 mb-6">
+                    {product.options.map((opt) => (
+                      <div key={opt.id || opt.name}>
+                        <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block mb-2">
+                          {opt.name}:{' '}
+                          <strong className="text-stone-200 font-medium">
+                            {selectedOptions[opt.name]}
+                          </strong>
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {opt.values.map((val) => {
+                            const active = selectedOptions[opt.name] === val;
+                            return (
+                              <button
+                                key={val}
+                                onClick={() => handleOptionSelect(opt.name, val)}
+                                className={`px-3.5 py-2 text-xs rounded-[2px] border transition-all ${
+                                  active
+                                    ? 'border-[#c5a059] bg-[#c5a059]/15 text-[#e6ca85] font-medium'
+                                    : 'border-white/15 bg-white/[0.02] text-stone-400 hover:border-white/30 hover:text-white'
+                                }`}
+                              >
+                                {val}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 p-4 rounded-[4px] bg-[#141312] border border-white/5 mb-6 text-xs">
                   <div>
@@ -208,9 +300,11 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase tracking-wider text-stone-500 block">
-                      Installation
+                      {activeSku ? 'SKU / Installation' : 'Installation'}
                     </span>
-                    <span className="text-stone-200 font-medium">{product.mounting}</span>
+                    <span className="text-stone-200 font-medium">
+                      {activeSku ? `${activeSku} • ${product.mounting}` : product.mounting}
+                    </span>
                   </div>
                 </div>
 
@@ -235,13 +329,33 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                     </div>
 
                     <button
-                      onClick={() => addToCart(product, quantity)}
-                      className="flex-grow flex items-center justify-center gap-2.5 px-6 py-3.5 bg-[#c5a059] hover:bg-[#d4af37] text-stone-950 text-xs uppercase tracking-[0.2em] font-semibold rounded-[2px] transition-all shadow-[0_4px_24px_rgba(197,160,89,0.3)]"
+                      onClick={() => addToCart(product, quantity, selectedVariant)}
+                      disabled={!isAvailable}
+                      className="flex-grow flex items-center justify-center gap-2.5 px-6 py-3.5 bg-[#c5a059] hover:bg-[#d4af37] disabled:opacity-50 text-stone-950 text-xs uppercase tracking-[0.2em] font-semibold rounded-[2px] transition-all shadow-[0_4px_24px_rgba(197,160,89,0.3)]"
                     >
                       <ShoppingBag className="w-4 h-4 stroke-[2]" />
-                      <span>Add to Project Bag</span>
+                      <span>{isAvailable ? 'Add to Project Bag' : 'Sold Out'}</span>
                     </button>
                   </div>
+
+                  {/* Direct Shopify Buy Now */}
+                  <button
+                    onClick={() => buyNow(product, quantity, selectedVariant)}
+                    disabled={!isAvailable || isCheckingOut}
+                    className="w-full py-3.5 px-6 bg-white/10 hover:bg-white/15 border border-[#c5a059]/40 text-[#e6ca85] hover:text-white text-xs uppercase tracking-[0.2em] font-semibold rounded-[2px] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isCheckingOut ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Preparing Shopify Checkout...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3.5 h-3.5" />
+                        <span>Buy Now — Instant Checkout</span>
+                      </>
+                    )}
+                  </button>
 
                   <button
                     onClick={() => openEnquiry(`Project Inquiry: ${product.name} (${quantity} units)`)}
@@ -330,14 +444,20 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                   <h3 className="font-serif text-xl text-white font-normal mb-4">
                     Key Features & Design Intent
                   </h3>
-                  <ul className="space-y-3 text-xs text-stone-300 font-light">
-                    {(product.features || []).map((feat, idx) => (
-                      <li key={idx} className="flex items-start gap-3">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#c5a059] mt-1.5 flex-shrink-0" />
-                        <span className="leading-relaxed">{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  {product.features && product.features.length > 0 ? (
+                    <ul className="space-y-3 text-xs text-stone-300 font-light">
+                      {product.features.map((feat, idx) => (
+                        <li key={idx} className="flex items-start gap-3">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#c5a059] mt-1.5 flex-shrink-0" />
+                          <span className="leading-relaxed">{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-stone-300 font-light leading-relaxed">
+                      {product.description}
+                    </p>
+                  )}
 
                   <div className="mt-8 p-5 rounded bg-white/[0.02] border border-white/5">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-[#c5a059] mb-2">
@@ -356,8 +476,15 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                 <h3 className="font-serif text-2xl sm:text-3xl text-white font-normal mb-4">
                   The Story of This Piece
                 </h3>
-                <p>{product.description}</p>
-                <p>{product.story}</p>
+                {product.descriptionHtml ? (
+                  <div
+                    className="prose prose-invert prose-sm max-w-none text-stone-300 font-light leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: product.descriptionHtml }}
+                  />
+                ) : (
+                  <p>{product.description}</p>
+                )}
+                {product.story && product.story !== product.description && <p>{product.story}</p>}
                 <div className="p-6 rounded-[4px] bg-[#141312] border-l-2 border-[#c5a059] text-xs text-stone-400 leading-relaxed italic">
                   "At MOSAKA Bathware, we believe a basin or tap can be more than a functional fixture. It can be the defining artistic soul of the bathroom."
                 </div>
@@ -371,7 +498,7 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                 </h3>
                 <div className="space-y-4">
                   <div className="p-4 rounded bg-[#141312] border border-white/5">
-                    <h4 className="font-medium text-white mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
+                    <h4 className="font-medium mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
                       Daily Maintenance
                     </h4>
                     <p className="text-stone-400">
@@ -380,7 +507,7 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                   </div>
 
                   <div className="p-4 rounded bg-[#141312] border border-white/5">
-                    <h4 className="font-medium text-white mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
+                    <h4 className="font-medium mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
                       Cleaning Agents
                     </h4>
                     <p className="text-stone-400">
@@ -389,7 +516,7 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                   </div>
 
                   <div className="p-4 rounded bg-[#141312] border border-white/5">
-                    <h4 className="font-medium text-white mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
+                    <h4 className="font-medium mb-1.5 uppercase tracking-wider text-[11px] text-[#e6ca85]">
                       Timber Nourishment
                     </h4>
                     <p className="text-stone-400">
@@ -450,7 +577,7 @@ export default function ProductDetailClient({ product, pairedProducts }) {
                     <div className="flex flex-col justify-between">
                       <div>
                         <span className="text-[10px] uppercase tracking-[0.2em] text-stone-400 block mb-1">
-                          {paired.subcategory}
+                          {paired.subcategory || paired.category}
                         </span>
                         <Link href={`/shop/${paired.slug}`}>
                           <h3 className="font-serif text-lg text-white group-hover:text-gold-300 transition-colors font-normal">
@@ -488,4 +615,3 @@ export default function ProductDetailClient({ product, pairedProducts }) {
     </div>
   );
 }
-

@@ -53,3 +53,4 @@ with open('scripts/mosaka_shopify_products.csv', 'w', newline='', encoding='utf-
         ])
 
 print(f"Generated scripts/mosaka_shopify_products.csv with {len(products)} products.")
+
