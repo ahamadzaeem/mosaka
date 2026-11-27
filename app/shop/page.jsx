@@ -68,7 +68,7 @@ const subcategoriesList = [
 
 export default function ShopPage() {
   const router = useRouter();
-  const { cartCount, setIsCartOpen, addToCart } = useCart();
+  const { cartCount, setIsCartOpen, addToCart, products: liveProducts } = useCart();
 
   const [category, setCategory] = useState('All Products');
   const [selectedMaterials, setSelectedMaterials] = useState([]);
@@ -84,9 +84,9 @@ export default function ShopPage() {
   const [viewMode, setViewMode] = useState('grid');
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Filter products strictly from the PDF catalogue
+  // Filter products strictly from the PDF catalogue (merged with live Shopify variants)
   const filteredProducts = useMemo(() => {
-    let result = [...products];
+    let result = [...(liveProducts && liveProducts.length > 0 ? liveProducts : products)];
 
     // Category filter
     if (category !== 'All Products') {
@@ -134,7 +134,7 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [category, selectedMaterials, selectedFinishes, selectedSubcategories, sort, search]);
+  }, [liveProducts, category, selectedMaterials, selectedFinishes, selectedSubcategories, sort, search]);
 
   const toggleFilter = (value, selected, setter) => {
     setter(

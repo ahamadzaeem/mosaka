@@ -1,13 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
+import Link from 'next/link';
 import { useCart } from '../context/CartContext';
-import { X, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
+import { X, ShoppingBag, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function CartDrawer() {
-  const { isCartOpen, setIsCartOpen, cart, removeFromCart, updateQuantity, cartTotal, cartCount } = useCart();
+  const {
+    isCartOpen,
+    setIsCartOpen,
+    cart,
+    removeFromCart,
+    updateQuantity,
+    cartTotal,
+    proceedToCheckout,
+    isCheckingOut,
+    openEnquiry,
+  } = useCart();
 
   if (!isCartOpen) return null;
+
+  const handleCheckout = async () => {
+    const result = await proceedToCheckout();
+    if (!result?.redirected) {
+      // Fallback to concierge enquiry when items are not yet synced in Shopify admin
+      const itemSummary = cart.map((i) => `${i.name} (x${i.quantity})`).join(', ');
+      setIsCartOpen(false);
+      openEnquiry(`Bespoke Order: ${itemSummary}`);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
@@ -36,25 +57,39 @@ export default function CartDrawer() {
             cart.map((item) => (
               <div key={item.id} className="py-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-14 h-12 object-cover rounded border border-white/10"
-                  />
+                  <Link
+                    href={item.slug ? `/shop/${item.slug}` : '/shop'}
+                    onClick={() => setIsCartOpen(false)}
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-14 h-12 object-cover rounded border border-white/10 hover:border-gold-400 transition-colors"
+                    />
+                  </Link>
                   <div>
-                    <h5 className="font-serif text-base text-white">{item.name}</h5>
-                    <p className="text-[11px] text-stone-400">AED {item.price.toLocaleString()}</p>
+                    <Link
+                      href={item.slug ? `/shop/${item.slug}` : '/shop'}
+                      onClick={() => setIsCartOpen(false)}
+                    >
+                      <h5 className="font-serif text-base text-white hover:text-gold-300 transition-colors">
+                        {item.name}
+                      </h5>
+                    </Link>
+                    <p className="text-[11px] text-stone-400">
+                      AED {Number(item.price || 0).toLocaleString()}
+                    </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="text-stone-400 hover:text-white text-xs px-1 border border-white/10 rounded"
+                        className="text-stone-400 hover:text-white text-xs px-1.5 border border-white/10 rounded"
                       >
                         -
                       </button>
                       <span className="text-xs text-stone-300">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="text-stone-400 hover:text-white text-xs px-1 border border-white/10 rounded"
+                        className="text-stone-400 hover:text-white text-xs px-1.5 border border-white/10 rounded"
                       >
                         +
                       </button>
@@ -85,13 +120,21 @@ export default function CartDrawer() {
               </span>
             </div>
             <button
-              onClick={() => {
-                alert('Thank you for choosing MOSAKA. A Dubai showroom concierge will contact you to confirm payment and delivery.');
-                setIsCartOpen(false);
-              }}
-              className="w-full py-3.5 bg-gold-400 hover:bg-gold-300 text-stone-950 text-xs uppercase tracking-luxury font-medium transition-colors"
+              onClick={handleCheckout}
+              disabled={isCheckingOut}
+              className="w-full py-3.5 bg-gold-400 hover:bg-gold-300 disabled:opacity-60 text-stone-950 text-xs uppercase tracking-luxury font-medium transition-colors flex items-center justify-center gap-2"
             >
-              Proceed to Bespoke Checkout
+              {isCheckingOut ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Connecting to Shopify Checkout...</span>
+                </>
+              ) : (
+                <>
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
         )}
@@ -99,4 +142,3 @@ export default function CartDrawer() {
     </div>
   );
 }
-
